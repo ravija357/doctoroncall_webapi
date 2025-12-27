@@ -20,9 +20,9 @@ export default function SplashScreen() {
       <h1 className="text-4xl md:text-5xl font-bold text-white text-center mb-4 drop-shadow-lg">
         DoctorOnCall
       </h1>
-      <p className="text-white/80 text-lg text-center px-4 max-w-md">
+      {/* <p className="text-white/80 text-lg text-center px-4 max-w-md">
         Healthcare at your fingertips
-      </p>
+      </p> */}
     </div>
   );
 }
