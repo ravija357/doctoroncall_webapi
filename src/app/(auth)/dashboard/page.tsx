@@ -40,6 +40,8 @@ export default function DashboardPage() {
             key={cat.label}
             className="w-32 h-28 rounded-2xl border border-gray-200 shadow-sm flex flex-col items-center justify-center bg-white"
           >
+
+           {/*Image of Category of doctors list */}
             <div className="mb-2 text-4xl text-sky-500">🏥</div>
             <span className="text-sky-500 font-serif text-sm">{cat.label}</span>
           </div>
