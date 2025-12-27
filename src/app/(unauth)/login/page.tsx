@@ -7,7 +7,7 @@ export default function LoginPage() {
   const router = useRouter();
 
   const handleLogin = () => {
-    // TODO: later call your Web API for real auth
+    
     router.push('/dashboard');
   };
 
