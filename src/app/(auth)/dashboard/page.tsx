@@ -18,6 +18,17 @@ export default function DashboardPage() {
       degree: 'MBBS, ND-DNB',
       timing: 'Opening Timings: 9:00am - 5:00pm.',
     },
+    {
+      name: 'Dr. Pravel Smith',
+      degree: 'MBBS, ND-DNB',
+      timing: 'Opening Timings: 9:00am - 5:00pm.',
+    },
+    {
+      name: 'Dr. Mitchel Starch',
+      degree: 'MBBS, ND-DNB',
+      timing: 'Opening Timings: 9:00am - 5:00pm.',
+    },
+   
   ];
 
   return (
