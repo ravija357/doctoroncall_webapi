@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function LoginPage() {
   return (
@@ -7,9 +8,14 @@ export default function LoginPage() {
       <div className="w-full max-w-md px-6">
         {/* Logo + Title */}
         <div className="flex flex-col items-center mb-10">
-          {/* Replace with Image if you add logo.png */}
-          <div className="mb-2 text-4xl text-sky-400">♥</div>
-          <h1 className="text-4xl font-serif text-black">Doctor On Call</h1>
+             <Image
+               src="/doctoroncall_webapi/public/doctoroncall_logo_webapi.png"
+               alt="Doctor On Call logo"
+               width={80}
+               height={80}
+               className="mb-2"
+             />
+             <h1 className="text-4xl font-serif text-black">Doctor On Call</h1>
         </div>
 
         {/* Email */}
