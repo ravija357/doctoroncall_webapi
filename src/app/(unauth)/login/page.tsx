@@ -1,21 +1,29 @@
 'use client';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
+  const router = useRouter();
+
+  const handleLogin = () => {
+    // TODO: later call your Web API for real auth
+    router.push('/dashboard');
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-white">
       <div className="w-full max-w-md px-6">
         {/* Logo + Title */}
         <div className="flex flex-col items-center mb-10">
-             <Image
-               src="/doctoroncall_webapi/public/doctoroncall_logo_webapi.png"
-               alt="Doctor On Call logo"
-               width={80}
-               height={80}
-               className="mb-2"
-             />
-             <h1 className="text-4xl font-serif text-black">Doctor On Call</h1>
+          <Image
+            src="/doctoroncall_logo_webapi.png"
+            alt="Doctor On Call logo"
+            width={80}
+            height={80}
+            className="mb-2"
+          />
+          <h1 className="text-4xl font-serif text-black">Doctor On Call</h1>
         </div>
 
         {/* Email */}
@@ -56,7 +64,11 @@ export default function LoginPage() {
         </div>
 
         {/* Login button */}
-        <button className="w-full h-20 rounded-2xl bg-sky-400 text-white text-2xl font-serif">
+        <button
+          type="button"
+          onClick={handleLogin}
+          className="w-full h-20 rounded-2xl bg-sky-400 text-white text-2xl font-serif"
+        >
           Login
         </button>
       </div>
