@@ -1,26 +1,65 @@
 'use client';
+
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function RegisterPage() {
+  const router = useRouter();
+
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleRegister = async () => {
+    try {
+      setLoading(true);
+
+      const res = await fetch('http://localhost:3001/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include', // 🔥 cookie support
+        body: JSON.stringify({
+          email,
+          password,
+        }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        alert(err.message || 'Registration failed');
+        setLoading(false);
+        return;
+      }
+
+      // ✅ SUCCESS → GO TO LOGIN
+      alert('Registration successful! Please login.');
+      router.push('/login');
+    } catch (error) {
+      console.error(error);
+      alert('Something went wrong');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-white">
       <div className="w-full max-w-md px-6">
-        {/* Logo + Title */}
+        {/* Logo */}
         <div className="flex flex-col items-center mb-10">
-          {/* Replace ♥ with Image component when you add logo asset */}
-          <div className="mb-2 text-4xl text-sky-400">♥</div>
-          <h1 className="text-4xl font-serif text-black">Doctor On Call</h1>
-        </div>
-
-        {/* Name */}
-        <div className="mb-6">
-          <label className="block mb-2 text-xl font-serif text-black">
-            Name
-          </label>
-          <input
-            type="text"
-            className="w-full h-20 rounded-2xl border border-gray-200 bg-white px-4 text-lg outline-none focus:border-sky-400"
+          <Image
+            src="/doctoroncall_logo_webapi.png"
+            alt="Doctor On Call logo"
+            width={80}
+            height={80}
           />
+          <h1 className="text-4xl font-serif text-black mt-2">
+            Create Account
+          </h1>
         </div>
 
         {/* Email */}
@@ -30,33 +69,42 @@ export default function RegisterPage() {
           </label>
           <input
             type="email"
-            className="w-full h-20 rounded-2xl border border-gray-200 bg-white px-4 text-lg outline-none focus:border-sky-400"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full h-20 rounded-2xl border border-gray-200 px-4 text-lg outline-none"
           />
         </div>
 
         {/* Password */}
-        <div className="mb-8">
+        <div className="mb-6">
           <label className="block mb-2 text-xl font-serif text-black">
             Password
           </label>
           <input
             type="password"
-            className="w-full h-20 rounded-2xl border border-gray-200 bg-white px-4 text-lg outline-none focus:border-sky-400"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full h-20 rounded-2xl border border-gray-200 px-4 text-lg outline-none"
           />
         </div>
 
-        {/* SignUp button */}
-        <button className="w-full h-20 rounded-2xl bg-sky-400 text-white text-2xl font-serif mb-4">
-          SignUp
-        </button>
-
-        {/* Link back to login */}
-        <div className="text-center text-lg font-serif text-black">
+        {/* Login link */}
+        <div className="mb-6 text-center text-lg font-serif text-black">
           Already have an account?{' '}
           <Link href="/login" className="text-sky-400">
             Login
           </Link>
         </div>
+
+        {/* Register button */}
+        <button
+          type="button"
+          onClick={handleRegister}
+          disabled={loading}
+          className="w-full h-20 rounded-2xl bg-sky-400 text-white text-2xl font-serif"
+        >
+          {loading ? 'Registering...' : 'Sign Up'}
+        </button>
       </div>
     </div>
   );

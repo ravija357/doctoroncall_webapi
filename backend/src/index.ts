@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import authRoutes from './app/routes/auth.routes';
+import cookieParser from 'cookie-parser';
 
 dotenv.config();
 
@@ -12,9 +13,11 @@ const PORT = Number(process.env.PORT) || 3001;
 app.use(
   cors({
     origin: 'http://localhost:3000',
-    credentials: true, // ✅ REQUIRED FOR COOKIES
+    credentials: true, // 🔥 REQUIRED
   })
 );
+
+app.use(cookieParser());
 
 app.use(express.json({ limit: '10mb' }));
 
