@@ -9,7 +9,7 @@ export default function UserProfilePage() {
   const [userId, setUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // 🔹 Fetch logged-in user
+  // Fetch logged-in user
   useEffect(() => {
     fetch("http://localhost:3001/api/auth/me", {
       credentials: "include",
