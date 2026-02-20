@@ -8,6 +8,8 @@ interface DoctorCardProps {
   doctor: Doctor;
 }
 
+import { getImageUrl } from '@/utils/imageHelper';
+
 export default function DoctorCard({ doctor }: DoctorCardProps) {
   return (
     <Card className="overflow-hidden transition-all hover:shadow-lg">
@@ -18,7 +20,7 @@ export default function DoctorCard({ doctor }: DoctorCardProps) {
         <div className="mb-4 -mt-12 flex justify-between">
             <div className="h-20 w-20 overflow-hidden rounded-full border-4 border-white bg-gray-200">
                 {doctor.user.image ? (
-                     <img src={doctor.user.image} alt="Doctor" className="h-full w-full object-cover" />
+                     <img src={getImageUrl(doctor.user.image, doctor.user._id, doctor.user.updatedAt)} alt="Doctor" className="h-full w-full object-cover" />
                 ) : (
                     <div className="flex h-full w-full items-center justify-center bg-gray-200 text-2xl font-bold text-gray-500">
                         {doctor.user.firstName?.[0] || 'D'}

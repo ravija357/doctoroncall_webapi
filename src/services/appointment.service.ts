@@ -31,5 +31,10 @@ export const appointmentService = {
     cancelAppointment: async (id: string) => {
         const res = await api.patch<{ success: boolean; data: Appointment; message: string }>(`/appointments/${id}/cancel`);
         return res.data;
+    },
+
+    updateStatus: async (id: string, status: 'confirmed' | 'cancelled' | 'max_capacity' | 'completed') => {
+        const res = await api.patch<{ success: boolean; data: Appointment; message: string }>(`/appointments/${id}/status`, { status });
+        return res.data;
     }
 };

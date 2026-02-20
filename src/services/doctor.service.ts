@@ -16,5 +16,15 @@ export const doctorService = {
     getDoctorById: async (id: string) => {
         const res = await api.get<{ success: boolean; data: Doctor }>(`/doctors/${id}`);
         return res.data.data;
+    },
+
+    getProfile: async () => {
+        const res = await api.get<{ success: boolean; data: Doctor }>('/doctors/profile/me');
+        return res.data.data;
+    },
+
+    updateSchedule: async (schedules: any[]) => {
+        const res = await api.put<{ success: boolean; data: Doctor }>('/doctors/profile/schedule', { schedules });
+        return res.data.data;
     }
 };

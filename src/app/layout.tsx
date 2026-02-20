@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google"; // Using Inter as requested/default
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
+import { RoleProvider } from "@/context/RoleContext";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
@@ -12,7 +13,9 @@ export const metadata: Metadata = {
   description: "Advanced Doctor Booking System",
 };
 
+import { Toaster } from "sonner";
 import { SocketProvider } from "@/context/SocketContext";
+import { NotificationProvider } from "@/context/NotificationContext";
 
 export default function RootLayout({
   children,
@@ -23,13 +26,18 @@ export default function RootLayout({
     <html lang="en">
       <body className={inter.className}>
         <AuthProvider>
-            <SocketProvider>
-                <Navbar />
-                <main className="min-h-screen bg-gray-50">
-                {children}
-                </main>
-                <Footer />
-            </SocketProvider>
+            <RoleProvider>
+                <SocketProvider>
+                    <NotificationProvider>
+                        <Navbar />
+                        <main className="min-h-screen bg-gray-50">
+                        {children}
+                        </main>
+                        <Footer />
+                        <Toaster richColors position="top-right" />
+                    </NotificationProvider>
+                </SocketProvider>
+            </RoleProvider>
         </AuthProvider>
       </body>
     </html>

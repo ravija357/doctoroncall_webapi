@@ -5,6 +5,8 @@ export interface User {
     image?: string;
     firstName?: string;
     lastName?: string;
+    createdAt?: string;
+    updatedAt?: string;
 }
 
 export interface AuthState {
@@ -27,6 +29,15 @@ export interface Schedule {
     _id: string;
 }
 
+export interface Review {
+    _id: string;
+    patientName: string;
+    date: string;
+    rating: number;
+    comment: string;
+    patientId?: string;
+}
+
 export interface Doctor {
     _id: string;
     user: User;
@@ -40,6 +51,7 @@ export interface Doctor {
     totalReviews: number;
     schedules: Schedule[];
     hospital?: string;
+    reviews?: Review[];
 }
 
 export interface Appointment {

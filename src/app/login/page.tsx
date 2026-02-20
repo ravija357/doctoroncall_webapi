@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import AuthLayout from "@/components/auth/AuthLayout";
 import AuthSidebar from "@/components/auth/AuthSidebar";
 import FeatureItem from "@/components/auth/FeatureItem";
-import RoleButton from "@/components/auth/RoleButton";
+
 import { useLoginForm } from "@/hooks/useLoginForm";
 
 export default function LoginPage() {
@@ -26,16 +26,7 @@ export default function LoginPage() {
               Modern Healthcare Interface
             </>
           }
-          footer={
-            <div className="flex items-center gap-4">
-              <div className="flex -space-x-4">
-                {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className={`h-12 w-12 rounded-full border-4 border-blue-600 bg-blue-400 ring-2 ring-white/10`} />
-                ))}
-              </div>
-              <p className="text-sm font-bold">Join 50k+ active users globally</p>
-            </div>
-          }
+          footer={undefined}
         >
           <FeatureItem icon={<CheckCircle2 className="text-blue-300" />} text="Instant Booking with 500+ Specialists" />
           <FeatureItem icon={<CheckCircle2 className="text-blue-300" />} text="Secure Electronic Medical Records" />
@@ -97,23 +88,7 @@ export default function LoginPage() {
             {errors.password && <p className="text-xs font-bold text-red-500 mt-1">{errors.password.message}</p>}
           </div>
 
-          <div className="py-2">
-            <Label className="text-slate-700 font-bold block mb-2 text-xs uppercase tracking-wider text-center lg:text-left">I am signing in as a:</Label>
-            <div className="grid grid-cols-2 gap-3">
-              <RoleButton
-                role="user"
-                currentRole={currentRole}
-                register={register}
-                label="Patient"
-              />
-              <RoleButton
-                role="doctor"
-                currentRole={currentRole}
-                register={register}
-                label="Doctor"
-              />
-            </div>
-          </div>
+
 
           {error && (
             <div className="rounded-xl bg-red-50 p-4 border border-red-100">

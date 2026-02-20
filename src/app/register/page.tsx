@@ -8,7 +8,6 @@ import { Label } from "@/components/ui/label";
 import AuthLayout from "@/components/auth/AuthLayout";
 import AuthSidebar from "@/components/auth/AuthSidebar";
 import BenefitBox from "@/components/auth/BenefitBox";
-import RoleButton from "@/components/auth/RoleButton";
 import { useRegisterForm } from "@/hooks/useRegisterForm";
 
 export default function RegisterPage() {
@@ -28,19 +27,7 @@ export default function RegisterPage() {
               HIPAA Compliant Security
             </>
           }
-          footer={
-            <div className="flex items-center gap-6">
-              <div className="flex flex-col">
-                <span className="text-4xl font-black italic">98%</span>
-                <span className="text-xs uppercase tracking-widest font-bold text-slate-400">Satisfaction</span>
-              </div>
-              <div className="h-10 w-px bg-slate-700" />
-              <div className="flex flex-col">
-                <span className="text-4xl font-black italic">24/7</span>
-                <span className="text-xs uppercase tracking-widest font-bold text-slate-400">Support</span>
-              </div>
-            </div>
-          }
+          footer={undefined}
         >
           <p className="text-xl text-slate-300 leading-relaxed font-medium mb-4">
             Whether you're a provider or a patient, we offer the tools you need for a better care experience.
@@ -130,21 +117,8 @@ export default function RegisterPage() {
         </div>
 
         <div className="py-2">
-          <Label className="text-slate-700 font-bold block mb-2 text-xs uppercase tracking-wider">I am joining as a:</Label>
-          <div className="grid grid-cols-2 gap-3">
-            <RoleButton
-              role="user"
-              currentRole={currentRole}
-              register={register}
-              label="Patient"
-            />
-            <RoleButton
-              role="doctor"
-              currentRole={currentRole}
-              register={register}
-              label="Doctor"
-            />
-          </div>
+          {/* Role selection hidden, handled by context */}
+          <input type="hidden" {...register("role")} />
           {errors.role && <p className="text-[10px] font-bold text-red-500 mt-1">{errors.role.message}</p>}
         </div>
 

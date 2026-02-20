@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useAuth } from "@/context/AuthContext";
+import { useRole } from "@/context/RoleContext";
 
 const registerSchema = z.object({
     firstName: z.string().min(2, "First name must be at least 2 characters"),
@@ -18,7 +19,8 @@ const registerSchema = z.object({
 
 export type RegisterFormValues = z.infer<typeof registerSchema>;
 
-export function useRegisterForm() {
+export const useRegisterForm = () => {
+    const { role } = useRole();
     const { register: authRegister } = useAuth();
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState("");
@@ -26,7 +28,8 @@ export function useRegisterForm() {
     const form = useForm<RegisterFormValues>({
         resolver: zodResolver(registerSchema),
         defaultValues: {
-            role: "user"
+            // Default to 'user' if role is null (e.g. direct access)
+            role: role === 'doctor' ? 'doctor' : 'user'
         }
     });
 
@@ -57,4 +60,5 @@ export function useRegisterForm() {
         currentRole,
         onSubmit: form.handleSubmit(onSubmit),
     };
-}
+};
+

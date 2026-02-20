@@ -1,211 +1,261 @@
 "use client";
 
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
-import CategoryCard from "@/components/dashboard/CategoryCard";
-import DoctorListingCard from "@/components/dashboard/DoctorListingCard";
-import AppointmentList from "@/components/dashboard/AppointmentList";
+import { appointmentService } from "@/services/appointment.service";
+import { doctorService } from "@/services/doctor.service";
+import { Appointment, Doctor } from "@/types";
+import { getImageUrl } from "@/utils/imageHelper";
+import Link from "next/link";
 import { 
-  Search,
-  Bell,
-  Settings,
-  Menu,
-  X
+  Calendar, 
+  MapPin, 
+  Clock, 
+  Search, 
+  Bell, 
+  ChevronRight, 
+  Activity, 
+  FileText, 
+  Pill,
+  Star,
+  Stethoscope
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import api from "@/services/api";
-import { Input } from "@/components/ui/input";
 
 export default function DashboardPage() {
-  const router = useRouter();
   const { user } = useAuth();
-  const [doctors, setDoctors] = useState<any[]>([]);
+  const router = useRouter();
+  const [nextAppointment, setNextAppointment] = useState<Appointment | null>(null);
+  const [topDoctors, setTopDoctors] = useState<Doctor[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
-
-  const fetchDoctors = useCallback(async (query = "", category = "") => {
-    setLoading(true);
-    try {
-      let url = "/doctors";
-      const params = new URLSearchParams();
-      if (query) params.append("name", query);
-      if (category) params.append("specialization", category);
-      
-      const queryString = params.toString();
-      if (queryString) url += `?${queryString}`;
-
-      const res = await api.get(url);
-      if (res.data.success) {
-        setDoctors(res.data.data);
-      }
-    } catch (err) {
-      console.error("Failed to fetch doctors", err);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
 
   useEffect(() => {
-    fetchDoctors();
-  }, [fetchDoctors]);
+    const fetchData = async () => {
+      try {
+        const [appts, docs] = await Promise.all([
+           appointmentService.getMyAppointments().catch(() => []),
+           doctorService.getAllDoctors().catch(() => [])
+        ]);
 
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value;
-    setSearchQuery(val);
-    fetchDoctors(val, selectedCategory || "");
-  };
+        // Find next confirmed appointment
+        if (appts) {
+            const upcoming = appts
+                .filter(a => new Date(a.date) >= new Date() && a.status === 'confirmed')
+                .sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
+            setNextAppointment(upcoming || null);
+        }
 
-  const handleCategoryClick = (category: string) => {
-    const newVal = selectedCategory === category ? null : category;
-    setSelectedCategory(newVal);
-    fetchDoctors(searchQuery, newVal || "");
-  };
+        if (docs) {
+            // Get top rated doctors
+            const top = docs.sort((a,b) => b.averageRating - a.averageRating).slice(0, 4);
+            setTopDoctors(top);
+        }
+      } catch (e) {
+        console.error("Dashboard fetch error", e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    if (user) fetchData();
+  }, [user]);
 
-  const categories = [
-    { label: "WheelChair", icon: "♿", color: "#3FB8AF", value: "General" },
-    { label: "Nutrisi", icon: "🍎", color: "#6EB0D9", value: "Nutritionist" },
-    { label: "Heart", icon: "💙", color: "#EC644B", value: "Cardiologist" },
-    { label: "Brain", icon: "🧠", color: "#9B59B6", value: "Neurologist" },
-    { label: "Eyes", icon: "👁️", color: "#F1C40F", value: "Ophthalmologist" },
-  ];
+  if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-[#FDFDFD] pb-32">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
-        {/* Majestic Header */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between py-12 gap-8">
-          <div className="space-y-1">
-            <h1 className="text-5xl font-extrabold tracking-tight text-slate-900 font-serif">
-              Find Your Doctor
-            </h1>
-            <p className="text-xl text-slate-500 font-medium">
-              Book an appointment for consultation
-            </p>
-          </div>
-          
-          <div className="flex items-center gap-4 lg:gap-6">
-            <div className={`relative flex items-center transition-all duration-300 ${isSearchOpen ? 'w-full lg:w-80' : 'w-12 overflow-hidden'}`}>
-              <Input
-                type="text"
-                placeholder="Search doctors..."
-                className="h-12 pl-12 rounded-2xl border-slate-100 shadow-lg focus:ring-blue-500 pr-10"
-                value={searchQuery}
-                onChange={handleSearchChange}
-              />
-              <button 
-                onClick={() => setIsSearchOpen(!isSearchOpen)}
-                className="absolute left-0 w-12 h-12 flex items-center justify-center text-slate-400 hover:text-blue-600 transition-colors"
-              >
-                <Search className="w-6 h-6" />
-              </button>
-              {isSearchOpen && (
-                <button 
-                  onClick={() => {
-                    setSearchQuery("");
-                    setIsSearchOpen(false);
-                    fetchDoctors("", selectedCategory || "");
-                  }}
-                  className="absolute right-3 text-slate-300 hover:text-slate-500"
-                >
-                  <X className="w-5 h-5" />
+    <div className="min-h-screen bg-[#F8FAFC] pb-24 font-sans">
+      
+      {/* Header / Top Bar */}
+      <div className="bg-white sticky top-0 z-20 border-b border-slate-100 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+           <div className="flex items-center gap-2">
+              <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-200">
+                  <Activity className="w-6 h-6" />
+              </div>
+              <span className="text-xl font-bold text-slate-800 tracking-tight">HealthPlus</span>
+           </div>
+           
+           <div className="flex items-center gap-4">
+              <Link href="/doctors">
+                <button className="p-2 text-slate-400 hover:text-blue-600 transition-colors">
+                    <Search className="w-6 h-6" />
                 </button>
-              )}
-            </div>
+              </Link>
+              <button className="relative p-2 text-slate-400 hover:text-blue-600 transition-colors">
+                  <Bell className="w-6 h-6" />
+                  <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
+              </button>
+              <Link href="/user/profile">
+                <div className="w-10 h-10 rounded-full border-2 border-slate-100 overflow-hidden cursor-pointer">
+                    <img 
+                        src={getImageUrl(user.image, user._id, user.updatedAt)} 
+                        alt="Profile" 
+                        className="w-full h-full object-cover"
+                    />
+                </div>
+              </Link>
+           </div>
+        </div>
+      </div>
 
-            <div className="w-16 h-16 rounded-3xl overflow-hidden shadow-2xl ring-4 ring-white shrink-0">
-              <img 
-                src={user?.image || "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"} 
-                alt="Profile" 
-                className="w-full h-full object-cover"
-              />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10">
+        
+        {/* Welcome Section */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+                <h1 className="text-3xl font-bold text-slate-800 font-serif">
+                    Good Morning, {user.firstName}
+                </h1>
+                <p className="text-slate-500 mt-1">Here is your daily health overview</p>
             </div>
-          </div>
+            <div className="text-right hidden md:block">
+                <p className="text-2xl font-bold text-slate-800">{new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'long' })}</p>
+                <p className="text-sm font-bold text-slate-400 uppercase tracking-wider">{new Date().toLocaleDateString('en-US', { weekday: 'long' })}</p>
+            </div>
         </div>
 
-        {/* Categories Section */}
-        <section className="mt-8 space-y-8">
-            <AppointmentList />
-            
-          <h2 className="text-2xl font-bold text-slate-800 tracking-tight italic">
-            Browse by Category
-          </h2>
-          <div className="flex gap-8 overflow-x-auto pb-4 no-scrollbar">
-            {categories.map((cat, idx) => (
-              <div key={idx} onClick={() => handleCategoryClick(cat.value)}>
-                <CategoryCard 
-                  icon={cat.icon} 
-                  label={cat.label} 
-                  color={selectedCategory === cat.value ? "#2563EB" : cat.color} 
-                />
-              </div>
-            ))}
-          </div>
-        </section>
+        {/* Hero Grid: Next Appointment & Health Tip */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Next Appointment Card */}
+            <div className="lg:col-span-2">
+                <div className="bg-gradient-to-br from-blue-600 to-indigo-600 rounded-[2.5rem] p-8 text-white shadow-2xl shadow-blue-200 relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
+                    <div className="absolute bottom-0 left-0 w-48 h-48 bg-black/10 rounded-full blur-3xl -ml-10 -mb-10 pointer-events-none"></div>
+                    
+                    <div className="relative z-10 flex flex-col h-full justify-between min-h-[220px]">
+                        <div className="flex justify-between items-start">
+                            <div>
+                                <h2 className="text-2xl font-bold mb-1">Next Appointment</h2>
+                                {nextAppointment ? (
+                                    <p className="text-blue-100 font-medium">Don't forget your scheduled visit</p>
+                                ) : (
+                                    <p className="text-blue-100 font-medium">No upcoming appointments</p>
+                                )}
+                            </div>
+                            <div className="bg-white/20 backdrop-blur-md p-3 rounded-2xl">
+                                <Calendar className="w-8 h-8 text-white" />
+                            </div>
+                        </div>
 
-        {/* Doctor Discovery Section */}
-        <section className="mt-16 space-y-8">
-          <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-slate-800 tracking-tight italic">
-              {selectedCategory ? `${selectedCategory} Specialists` : 'Available Specialists'}
-            </h2>
-            <button onClick={() => {
-              setSelectedCategory(null);
-              setSearchQuery("");
-              fetchDoctors();
-            }} className="text-blue-600 font-bold hover:underline">Clear Filters</button>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {loading ? (
-              [1, 2, 3, 4].map((i) => (
-                <div key={i} className="h-40 bg-slate-50 rounded-[2rem] border border-slate-100 animate-pulse" />
-              ))
-            ) : doctors.length > 0 ? (
-              doctors.map((doc, idx) => (
-                <DoctorListingCard
-                  key={idx}
-                  id={doc._id}
-                  name={`Dr. ${doc.user?.firstName || "Professional"} ${doc.user?.lastName || "Specialist"}`}
-                  specialization={doc.specialization}
-                  qualifications={doc.qualifications?.length > 0 ? doc.qualifications.join(", ") : "Expert Practitioner"}
-                  timings={doc.schedules?.find((s:any) => s.day === new Date().toLocaleDateString('en-US', { weekday: 'long' })) ? 
-                    `${doc.schedules.find((s:any) => s.day === new Date().toLocaleDateString('en-US', { weekday: 'long' })).startTime} - ${doc.schedules.find((s:any) => s.day === new Date().toLocaleDateString('en-US', { weekday: 'long' })).endTime}` 
-                    : "Check Availability"}
-                  image={doc.user?.image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${doc._id}`}
-                  onClick={() => router.push(`/doctors/${doc._id}`)}
-                />
-              ))
-            ) : (
-                <div className="col-span-full py-20 text-center space-y-4">
-                  <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto text-slate-300">
-                    <Search className="w-10 h-10" />
-                  </div>
-                  <p className="text-xl font-bold text-slate-400">No doctors found matching your criteria</p>
+                        {nextAppointment ? (
+                            <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 mt-6 flex items-center gap-4 border border-white/10">
+                                <div className="w-16 h-16 rounded-xl bg-white/20 overflow-hidden flex-shrink-0">
+                                     <img 
+                                        src={getImageUrl(nextAppointment.doctor.user.image, nextAppointment.doctor._id)} 
+                                        alt="Doctor" 
+                                        className="w-full h-full object-cover"
+                                     />
+                                </div>
+                                <div className="flex-1">
+                                    <h3 className="font-bold text-lg">Dr. {nextAppointment.doctor.user.firstName} {nextAppointment.doctor.user.lastName}</h3>
+                                    <p className="text-blue-100 text-sm">{nextAppointment.doctor.specialization}</p>
+                                </div>
+                                <div className="text-right pl-4 border-l border-white/20">
+                                    <p className="font-bold text-lg">{nextAppointment.startTime}</p>
+                                    <p className="text-blue-100 text-xs uppercase font-bold">{new Date(nextAppointment.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</p>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="mt-8">
+                                <Link href="/doctors">
+                                    <button className="bg-white text-blue-600 px-6 py-3 rounded-xl font-bold shadow-lg hover:shadow-xl hover:bg-blue-50 transition-all">
+                                        Book Now
+                                    </button>
+                                </Link>
+                            </div>
+                        )}
+                        
+                        {nextAppointment && (
+                            <Link href="/appointments" className="absolute bottom-0 right-0 p-4">
+                                <button className="flex items-center gap-2 text-sm font-bold text-white/80 hover:text-white transition-colors">
+                                    View Details <ChevronRight className="w-4 h-4" />
+                                </button>
+                            </Link>
+                        )}
+                    </div>
                 </div>
-            )}
-          </div>
-        </section>
+            </div>
 
-      </div>
-      
-      {/* Aesthetic Mobile-inspired Bottom Nav (Hidden on Desktop) */}
-      <div className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-white/80 backdrop-blur-2xl px-8 py-4 rounded-[2.5rem] shadow-2xl border border-white/20 flex items-center gap-12 lg:hidden">
-        <HomeIcon className="w-6 h-6 text-blue-600" />
-        <Bell className="w-6 h-6 text-slate-400" />
-        <Settings className="w-6 h-6 text-slate-400" />
-        <Menu className="w-6 h-6 text-slate-400" />
+            {/* Daily Tip / Banner */}
+            <div className="bg-emerald-50 rounded-[2.5rem] p-8 border border-emerald-100 relative overflow-hidden flex flex-col justify-center">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-200/50 rounded-full blur-2xl -mr-10 -mt-10"></div>
+                
+                <h3 className="text-xl font-bold text-emerald-900 mb-2 font-serif relative z-10">Daily Health Tip</h3>
+                <p className="text-emerald-700 font-medium leading-relaxed relative z-10 mb-6">
+                    "Staying hydrated improves energy levels and brain function. Drink at least 8 glasses today!"
+                </p>
+                <div className="flex items-center gap-3 relative z-10">
+                    <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600">
+                        <Activity className="w-5 h-5" />
+                    </div>
+                    <div>
+                         <p className="text-xs font-bold text-emerald-600 uppercase">Wellness</p>
+                         <p className="text-sm font-bold text-emerald-800">Vitality Check</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {/* Quick Actions */}
+        <div>
+            <h2 className="text-xl font-bold text-slate-800 mb-6 font-serif">Quick Actions</h2>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <ActionCard icon={<Search />} label="Find Doctor" color="bg-blue-50 text-blue-600" href="/doctors" />
+                <ActionCard icon={<Calendar />} label="My Appointments" color="bg-purple-50 text-purple-600" href="/appointments" />
+                <ActionCard icon={<FileText />} label="Medical Records" color="bg-orange-50 text-orange-600" href="#" />
+                <ActionCard icon={<Pill />} label="Prescriptions" color="bg-teal-50 text-teal-600" href="#" />
+            </div>
+        </div>
+
+        {/* Top/Recommended Doctors */}
+        <div>
+            <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-bold text-slate-800 font-serif">Top Rated Doctors</h2>
+                <Link href="/doctors" className="text-blue-600 font-bold text-sm hover:underline">View All</Link>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {loading ? (
+                    [1,2,3,4].map(i => <div key={i} className="h-64 bg-slate-50 rounded-[2rem] animate-pulse" />)
+                ) : (
+                    topDoctors.map(doctor => (
+                        <div key={doctor._id} className="bg-white p-4 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-300 group cursor-pointer" onClick={() => router.push(`/doctors/${doctor._id}`)}>
+                            <div className="w-full aspect-square rounded-[1.5rem] overflow-hidden mb-4 bg-slate-100 relative">
+                                <img 
+                                    src={getImageUrl(doctor.user.image, doctor._id)} 
+                                    alt="Doctor" 
+                                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                                />
+                                <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full flex items-center gap-1 text-xs font-bold text-slate-800 shadow-sm">
+                                    <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                                    {doctor.averageRating.toFixed(1)}
+                                </div>
+                            </div>
+                            <h3 className="font-bold text-slate-800 truncate">Dr. {doctor.user.firstName} {doctor.user.lastName}</h3>
+                            <p className="text-slate-500 text-sm mb-3 truncate">{doctor.specialization}</p>
+                            <div className="flex items-center justify-between">
+                                <p className="font-bold text-blue-600">${doctor.fees}</p>
+                                <button className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-blue-600 hover:text-white transition-all">
+                                    <ChevronRight className="w-4 h-4" />
+                                </button>
+                            </div>
+                        </div>
+                    ))
+                )}
+            </div>
+        </div>
+
       </div>
     </div>
   );
 }
 
-function HomeIcon({ className }: { className?: string }) {
+function ActionCard({ icon, label, color, href }: any) {
     return (
-        <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-            <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
-        </svg>
+        <Link href={href} className={`p-6 rounded-[2rem] border border-slate-50 shadow-sm hover:shadow-lg transition-all duration-300 group bg-white flex flex-col items-center justify-center gap-4 text-center cursor-pointer`}>
+            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 ${color}`}>
+                {React.cloneElement(icon, { className: "w-7 h-7" })}
+            </div>
+            <span className="font-bold text-slate-700 group-hover:text-slate-900">{label}</span>
+        </Link>
     );
 }

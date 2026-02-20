@@ -11,6 +11,8 @@ import { useAuth } from "@/context/AuthContext";
 import { Loader2, ArrowLeft, Phone, Share2, Star, Clock, DollarSign, MapPin } from "lucide-react";
 import api from "@/services/api";
 import Link from "next/link";
+import { useSocket } from "@/context/SocketContext";
+import { getImageUrl } from "@/utils/imageHelper";
 
 export default function DoctorDetailsPage() {
     const { id } = useParams();
@@ -34,8 +36,8 @@ export default function DoctorDetailsPage() {
         }
     }, [id]);
 
-    // Fetch Availability when date changes
-    useEffect(() => {
+    // Fetch Availability when date changes or schedule updates
+    const fetchAvailability = () => {
         if (id && bookingDate) {
            api.get(`/availability?doctorId=${id}&date=${bookingDate}`)
               .then(res => {
@@ -50,7 +52,31 @@ export default function DoctorDetailsPage() {
                   setAvailableSlots([]);
               });
         }
+    };
+
+    useEffect(() => {
+        fetchAvailability();
     }, [bookingDate, id]);
+
+    // Construct socket listener
+    const { socket } = useSocket();
+    
+    useEffect(() => {
+        if (!socket) return;
+        
+        const handleScheduleUpdate = (data: { doctorId: string }) => {
+            if (data.doctorId === id) {
+                console.log('[DoctorDetails] Schedule updated, refreshing...');
+                fetchAvailability();
+            }
+        };
+
+        socket.on('schedule_updated', handleScheduleUpdate);
+
+        return () => {
+            socket.off('schedule_updated', handleScheduleUpdate);
+        };
+    }, [socket, id, bookingDate]);
 
     const handleBook = async () => {
         if (!user) {
@@ -108,7 +134,7 @@ export default function DoctorDetailsPage() {
                 <div className="absolute -top-16 left-1/2 -translate-x-1/2">
                     <div className="w-32 h-32 rounded-3xl overflow-hidden border-4 border-white shadow-xl bg-gray-100">
                         <img 
-                            src={doctor.user.image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${doctor._id}`} 
+                            src={getImageUrl(doctor.user.image, doctor._id, doctor.user.updatedAt)} 
                             alt={`Dr. ${doctor.user.firstName}`} 
                             className="w-full h-full object-cover"
                         />

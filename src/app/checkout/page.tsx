@@ -10,6 +10,7 @@ import { doctorService } from "@/services/doctor.service";
 import { appointmentService } from "@/services/appointment.service";
 import { Doctor } from "@/types";
 import { useAuth } from "@/context/AuthContext";
+import { getImageUrl } from "@/utils/imageHelper";
 
 function CheckoutContent() {
     const router = useRouter();
@@ -68,27 +69,17 @@ function CheckoutContent() {
     return (
         <div className="min-h-screen bg-[#F5F5F5] py-12 px-4 sm:px-6 lg:px-8 font-sans">
             <div className="max-w-md mx-auto bg-white rounded-[2rem] shadow-xl overflow-hidden">
-                {/* Header */}
-                <div className="p-6 pb-2">
-                    <div onClick={() => router.back()} className="flex items-center gap-4 cursor-pointer text-slate-400 hover:text-slate-600 transition-colors">
-                        <MoveLeft className="w-6 h-6" />
-                        <span className="sr-only">Back</span>
-                    </div>
-                </div>
 
                 {/* Doctor Card - Summary */}
                 <div className="px-6 mb-8">
                      <div className="bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.08)] p-4 flex items-center gap-4 border border-slate-50">
                         <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-white shadow-sm shrink-0">
-                            <img src={doctor.user.image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${doctor._id}`} alt="Doctor" className="w-full h-full object-cover" />
+                            <img src={getImageUrl(doctor.user.image, doctor._id)} alt="Doctor" className="w-full h-full object-cover" />
                         </div>
                         <div className="flex-1 min-w-0">
                             <h3 className="font-bold text-lg text-slate-800 truncate">Dr. {doctor.user.firstName} {doctor.user.lastName}</h3>
                             <p className="text-xs text-slate-500 font-medium uppercase tracking-wide truncate">{doctor.qualifications && doctor.qualifications.length > 0 ? doctor.qualifications[0] : "Specialist"}</p>
                         </div>
-                         <div className="bg-[#6EB0D9] text-white px-6 py-2 rounded-xl text-sm font-bold shadow-lg shadow-blue-200">
-                                Book
-                            </div>
                     </div>
                     <p className="text-xs text-center text-slate-400 mt-4">Opening Timings: 9:00am - 5:00pm.</p>
                 </div>

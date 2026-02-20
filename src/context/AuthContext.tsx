@@ -12,6 +12,7 @@ interface AuthContextType {
   login: (data: any) => Promise<void>;
   register: (data: any) => Promise<void>;
   logout: () => Promise<void>;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -30,6 +31,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const res = await api.get<{ success: boolean; user: User }>('/auth/me');
       if (res.data.success) {
         setUser(res.data.user);
+        if (res.data.user.role) localStorage.setItem('selected_role', res.data.user.role);
       }
     } catch (error) {
       setUser(null);
@@ -42,7 +44,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const res = await api.post<LoginResponse>('/auth/login', data);
     if (res.data.success) {
       setUser(res.data.user);
-      router.push(res.data.user.role === 'admin' ? '/admin' : '/dashboard');
+      if (res.data.user.role) localStorage.setItem('selected_role', res.data.user.role);
+      if (res.data.user.role) localStorage.setItem('selected_role', res.data.user.role);
+      
+      if (res.data.user.role === 'admin') router.push('/admin');
+      else if (res.data.user.role === 'doctor') router.push('/doctor/dashboard');
+      else router.push('/dashboard');
     }
   };
 
@@ -50,6 +57,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const res = await api.post<LoginResponse>('/auth/register', data);
     if (res.data.success) {
       setUser(res.data.user);
+      if (res.data.user.role) localStorage.setItem('selected_role', res.data.user.role);
       router.push('/dashboard');
     }
   };
@@ -58,6 +66,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       await api.post('/auth/logout');
       setUser(null);
+      localStorage.removeItem('selected_role');
       router.push('/login');
     } catch (error) {
       console.error('Logout failed', error);
@@ -73,7 +82,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isLoading: loading, 
       login, 
       register, 
-      logout 
+      logout,
+      refreshUser: checkAuth
     }}>
       {children}
     </AuthContext.Provider>

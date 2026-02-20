@@ -18,6 +18,7 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { getImageUrl } from "@/utils/imageHelper";
 
 export default function AppointmentsPage() {
     const router = useRouter();
@@ -253,7 +254,7 @@ function AppointmentCard({ appointment, onDelete, onCancel }: { appointment: App
                         <Link href={`/doctors/${appointment.doctor._id}`} className="flex gap-4 group/doctor cursor-pointer">
                             <div className="w-14 h-14 rounded-2xl bg-slate-100 overflow-hidden ring-offset-2 transition-all group-hover/doctor:ring-2 ring-blue-400">
                                 <img 
-                                    src={appointment.doctor.user.image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${appointment.doctor._id}`} 
+                                    src={getImageUrl(appointment.doctor.user.image, appointment.doctor._id, appointment.doctor.user.updatedAt)} 
                                     alt="Doctor" 
                                     className="w-full h-full object-cover transition-transform group-hover/doctor:scale-110"
                                 />
