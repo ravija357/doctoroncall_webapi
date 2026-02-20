@@ -1,6 +1,7 @@
 "use client";
 
 import { useAuth } from "@/context/AuthContext";
+import { useSocket } from "@/context/SocketContext";
 import { useEffect, useState } from "react";
 import { doctorService } from "@/services/doctor.service";
 import { appointmentService } from "@/services/appointment.service";
@@ -27,7 +28,6 @@ import {
     Eye
 } from "lucide-react";
 import Link from "next/link";
-import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -50,43 +50,79 @@ export default function DoctorDashboard() {
   });
   const [loading, setLoading] = useState(true);
   const [isUpdatingImage, setIsUpdatingImage] = useState(false);
+  const { socket } = useSocket();
 
   // Data Fetching
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [profile, appts] = await Promise.all([
-          doctorService.getProfile().catch(e => null),
-          appointmentService.getDoctorAppointments().catch(e => [])
-        ]);
+  const fetchData = async () => {
+    try {
+      const [profile, appts] = await Promise.all([
+        doctorService.getProfile().catch(e => null),
+        appointmentService.getDoctorAppointments().catch(e => [])
+      ]);
 
-        if (profile) setDoctorProfile(profile);
-        if (appts) {
-           setAppointments(appts || []);
-           
-           // Calculate Stats
-           const uniquePatients = new Set(appts.map(a => a.patient._id)).size;
-           const today = new Date().toISOString().split('T')[0];
-           const todayCount = appts.filter(a => a.date.startsWith(today)).length;
-           // Mock revenue calculation: appointments * fees
-           const revenue = appts.filter(a => a.status === 'completed').length * (profile?.fees || 50);
+      if (profile) setDoctorProfile(profile);
+      if (appts) {
+         setAppointments(appts || []);
+         
+         // Calculate Stats
+         const uniquePatients = new Set(appts.map(a => a.patient._id)).size;
+         const today = new Date().toISOString().split('T')[0];
+         const todayCount = appts.filter(a => a.date.startsWith(today)).length;
+         // Mock revenue calculation: appointments * fees
+         const revenue = appts.filter(a => a.status === 'completed').length * (profile?.fees || 50);
 
-           setStats({
-             totalPatients: uniquePatients,
-             totalAppointments: appts.length,
-             todayAppointments: todayCount,
-             revenue: revenue
-           });
-        }
-      } catch (error) {
-        console.error("Dashboard data fetch failed", error);
-      } finally {
-        setLoading(false);
+         setStats({
+           totalPatients: uniquePatients,
+           totalAppointments: appts.length,
+           todayAppointments: todayCount,
+           revenue: revenue
+         });
       }
-    };
+    } catch (error) {
+      console.error("Dashboard data fetch failed", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchData();
   }, [user]);
+
+  useEffect(() => {
+    if (!socket) return;
+    
+    const handleRatingUpdate = (data: { doctorId: string, averageRating: number, totalReviews: number }) => {
+        setDoctorProfile(prev => {
+            if (prev && prev._id === data.doctorId) {
+                return { ...prev, averageRating: data.averageRating, totalReviews: data.totalReviews };
+            }
+            return prev;
+        });
+    };
+
+    const handleAppointmentUpdate = (data: { doctorId: string }) => {
+        if (doctorProfile && data.doctorId === doctorProfile._id) {
+            console.log("[Dashboard] Appointment updated globally, refreshing stats...");
+            fetchData();
+        }
+    };
+
+    socket.on('doctor_rating_updated', handleRatingUpdate);
+    socket.on('appointment_updated', handleAppointmentUpdate);
+    socket.on('doctor_profile_updated', (data: { doctorId: string }) => {
+        if (doctorProfile && data.doctorId === doctorProfile._id) {
+            console.log("[Dashboard] Profile updated globally, refreshing stats...");
+            fetchData();
+        }
+    });
+
+    return () => {
+        socket.off('doctor_rating_updated', handleRatingUpdate);
+        socket.off('appointment_updated', handleAppointmentUpdate);
+        socket.off('doctor_profile_updated');
+    };
+  }, [socket, doctorProfile]);
 
   const handleImageUpdate = async (file: File) => {
       // Implement image update logic (reuse from previous component or extract)
@@ -381,7 +417,7 @@ export default function DoctorDashboard() {
                         <h3 className="text-lg font-bold text-slate-800 mb-4 font-serif">Quick Actions</h3>
                         <div className="space-y-3">
                             <ActionButton icon={<CalendarCheck className="w-5 h-5" />} label="Block Date" />
-                            <ActionButton icon={<Clock className="w-5 h-5" />} label="Edit Hours" href="/doctor/profile" /> // Redirect to schedule settings
+                            <ActionButton icon={<Clock className="w-5 h-5" />} label="Edit Hours" href="/doctor/profile" />
                             <ActionButton icon={<Settings className="w-5 h-5" />} label="Settings" />
                         </div>
                      </div>

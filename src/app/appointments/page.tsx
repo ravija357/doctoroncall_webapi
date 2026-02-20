@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { appointmentService } from "@/services/appointment.service";
+import { reviewService } from "@/services/review.service";
 import { Appointment } from "@/types";
 import { 
   Calendar, 
@@ -13,7 +14,9 @@ import {
   XCircle, 
   AlertCircle,
   Stethoscope,
-  ChevronLeft
+  ChevronLeft,
+  Star,
+  MessageSquare
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -29,6 +32,13 @@ export default function AppointmentsPage() {
 
     const [actionAppointmentId, setActionAppointmentId] = useState<string | null>(null);
     const [actionType, setActionType] = useState<'cancel' | 'delete' | null>(null);
+
+    // Rating State
+    const [ratingAppointment, setRatingAppointment] = useState<Appointment | null>(null);
+    const [ratingValue, setRatingValue] = useState(0);
+    const [hoverRating, setHoverRating] = useState(0);
+    const [reviewComment, setReviewComment] = useState("");
+    const [submittingReview, setSubmittingReview] = useState(false);
 
     useEffect(() => {
         if (!authLoading && !isAuthenticated) {
@@ -92,6 +102,39 @@ export default function AppointmentsPage() {
         setActionType(null);
     };
 
+    const submitRating = async () => {
+        if (!ratingAppointment || ratingValue === 0) return;
+        setSubmittingReview(true);
+        try {
+            // Optimistic update: mark as reviewed by setting status to something or removing from list (if history)
+            // Or just close the modal and let the socket/refetch handle it. The 'delay' is likely the modal sticking around.
+            const tempApptId = ratingAppointment._id;
+            
+            // Just close the modal first so it feels instant
+            closeRatingModal();
+            
+            await reviewService.createReview({
+                doctorId: ratingAppointment.doctor._id,
+                rating: ratingValue,
+                comment: reviewComment
+            });
+            // We can optionally show a small toast here instead of blocking alert
+            console.log("Review submitted successfully");
+        } catch (err: any) {
+            console.error(err);
+            alert(err.message || "Failed to submit review.");
+        } finally {
+            setSubmittingReview(false);
+        }
+    };
+
+    const closeRatingModal = () => {
+        setRatingAppointment(null);
+        setRatingValue(0);
+        setHoverRating(0);
+        setReviewComment("");
+    };
+
     // Filter appointments based on tab
     const filteredAppointments = appointments.filter(apt => {
         const isPast = new Date(apt.date) < new Date() && apt.status === 'completed';
@@ -151,12 +194,15 @@ export default function AppointmentsPage() {
                 <div className="space-y-6">
                     {filteredAppointments.length > 0 ? (
                         filteredAppointments.map((apt) => (
-                            <AppointmentCard 
-                                key={apt._id} 
-                                appointment={apt} 
-                                onDelete={activeTab === 'history' ? (e) => handleDeleteClick(apt._id, e) : undefined}
-                                onCancel={(e) => handleCancelClick(apt._id, e)}
-                            />
+                                <AppointmentCard 
+                                    key={apt._id} 
+                                    appointment={apt} 
+                                    onDelete={activeTab === 'history' ? (e) => handleDeleteClick(apt._id, e) : undefined}
+                                    onCancel={(e) => handleCancelClick(apt._id, e)}
+                                    onRate={() => {
+                                        setRatingAppointment(apt);
+                                    }}
+                                />
                         ))
                     ) : (
                         <div className="text-center py-20 bg-slate-50 rounded-[2.5rem] border border-dashed border-slate-200">
@@ -210,12 +256,76 @@ export default function AppointmentsPage() {
                         </div>
                     </div>
                 )}
+
+                {/* Rating Modal */}
+                {ratingAppointment && (
+                    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
+                        <div className="bg-white p-8 rounded-[2rem] shadow-2xl border border-slate-100 max-w-md w-full mx-4 animate-in zoom-in-95 duration-200">
+                            <h3 className="text-2xl font-bold font-serif text-slate-800 mb-2">Rate your experience</h3>
+                            <p className="text-slate-500 text-sm mb-6">
+                                How was your appointment with <span className="font-bold">Dr. {ratingAppointment.doctor.user.lastName}</span>?
+                            </p>
+                            
+                            <div className="flex justify-center gap-2 mb-8">
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                    <button 
+                                        key={star}
+                                        type="button"
+                                        onClick={() => setRatingValue(star)}
+                                        onMouseEnter={() => setHoverRating(star)}
+                                        onMouseLeave={() => setHoverRating(0)}
+                                        className="p-1 transition-transform hover:scale-110 focus:outline-none"
+                                    >
+                                        <Star 
+                                            className={`w-10 h-10 ${
+                                                star <= (hoverRating || ratingValue)
+                                                    ? "fill-yellow-400 text-yellow-400 drop-shadow-sm" 
+                                                    : "text-slate-200"
+                                            } transition-colors duration-150`}
+                                        />
+                                    </button>
+                                ))}
+                            </div>
+
+                            <div className="mb-6">
+                                <label className="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-2">
+                                    <MessageSquare className="w-4 h-4 text-slate-400" /> Optional Comment
+                                </label>
+                                <textarea 
+                                    value={reviewComment}
+                                    onChange={(e) => setReviewComment(e.target.value)}
+                                    placeholder="Share details of your own experience at this doctor..."
+                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all resize-none h-24 text-slate-700 placeholder:text-slate-400"
+                                    maxLength={500}
+                                />
+                            </div>
+
+                            <div className="flex justify-end gap-3">
+                                <Button 
+                                    onClick={closeRatingModal} 
+                                    variant="ghost" 
+                                    disabled={submittingReview}
+                                    className="text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-xl"
+                                >
+                                    Cancel
+                                </Button>
+                                <Button 
+                                    onClick={submitRating} 
+                                    disabled={ratingValue === 0 || submittingReview}
+                                    className="bg-primary hover:bg-primary-hover text-white shadow-lg shadow-primary/30 rounded-xl px-8"
+                                >
+                                    {submittingReview ? "Submitting..." : "Submit Review"}
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );
 }
 
-function AppointmentCard({ appointment, onDelete, onCancel }: { appointment: Appointment, onDelete?: (e: React.MouseEvent) => void, onCancel?: (e: React.MouseEvent) => void }) {
+function AppointmentCard({ appointment, onDelete, onCancel, onRate }: { appointment: Appointment, onDelete?: (e: React.MouseEvent) => void, onCancel?: (e: React.MouseEvent) => void, onRate?: () => void }) {
     const statusColors = {
         confirmed: "bg-green-100 text-green-700",
         cancelled: "bg-red-100 text-red-700",
@@ -304,11 +414,20 @@ function AppointmentCard({ appointment, onDelete, onCancel }: { appointment: App
                             </Button>
                         )}
                         
+                        {(appointment.status === 'completed' || appointment.status === 'confirmed') && onRate && (
+                            <Button 
+                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); onRate(); }}
+                                className="rounded-xl h-10 px-6 font-bold bg-yellow-400 text-yellow-900 hover:bg-yellow-500 hover:scale-105 shadow-sm transition-all z-10"
+                            >
+                                <Star className="w-4 h-4 mr-2 fill-yellow-900" /> Rate Doctor
+                            </Button>
+                        )}
+                        
                         {onDelete && (
                             <Button 
                                 variant="ghost" 
-                                onClick={onDelete}
-                                className="rounded-xl h-10 px-6 font-bold text-red-500 hover:text-red-600 hover:bg-red-50 transition-all"
+                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDelete(e); }}
+                                className="rounded-xl h-10 px-6 font-bold text-red-500 hover:text-red-600 hover:bg-red-50 transition-all z-10"
                             >
                                 Delete History
                             </Button>

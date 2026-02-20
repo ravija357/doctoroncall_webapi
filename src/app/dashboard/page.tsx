@@ -1,26 +1,30 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { useSocket } from "@/context/SocketContext";
 import { appointmentService } from "@/services/appointment.service";
 import { doctorService } from "@/services/doctor.service";
 import { Appointment, Doctor } from "@/types";
 import { getImageUrl } from "@/utils/imageHelper";
 import Link from "next/link";
 import { 
-  Calendar, 
-  MapPin, 
-  Clock, 
-  Search, 
-  Bell, 
-  ChevronRight, 
-  Activity, 
-  FileText, 
+  Stethoscope, 
+  Heart,
+  Zap,
+  ShieldCheck,
+  TrendingUp,
+  Clock,
+  Calendar,
+  Activity,
+  Search,
+  FileText,
   Pill,
   Star,
-  Stethoscope
+  ChevronRight
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -28,6 +32,7 @@ export default function DashboardPage() {
   const [nextAppointment, setNextAppointment] = useState<Appointment | null>(null);
   const [topDoctors, setTopDoctors] = useState<Doctor[]>([]);
   const [loading, setLoading] = useState(true);
+  const { socket } = useSocket();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -37,7 +42,6 @@ export default function DashboardPage() {
            doctorService.getAllDoctors().catch(() => [])
         ]);
 
-        // Find next confirmed appointment
         if (appts) {
             const upcoming = appts
                 .filter(a => new Date(a.date) >= new Date() && a.status === 'confirmed')
@@ -46,7 +50,6 @@ export default function DashboardPage() {
         }
 
         if (docs) {
-            // Get top rated doctors
             const top = docs.sort((a,b) => b.averageRating - a.averageRating).slice(0, 4);
             setTopDoctors(top);
         }
@@ -59,57 +62,53 @@ export default function DashboardPage() {
     if (user) fetchData();
   }, [user]);
 
-  if (!user) return null;
+  useEffect(() => {
+    if (!socket) return;
+    
+    const handleRatingUpdate = (data: { doctorId: string, averageRating: number, totalReviews: number }) => {
+        setTopDoctors(prev => 
+            prev.map(doc => 
+                doc._id === data.doctorId 
+                    ? { ...doc, averageRating: data.averageRating, totalReviews: data.totalReviews }
+                    : doc
+            )
+        );
+    };
+
+    socket.on('doctor_rating_updated', handleRatingUpdate);
+    return () => {
+        socket.off('doctor_rating_updated', handleRatingUpdate);
+    };
+  }, [socket]);
+
+  useEffect(() => {
+    if (user?.role === 'doctor') {
+      router.push('/doctor/dashboard');
+    }
+  }, [user, router]);
+
+  if (!user || user.role === 'doctor') return null;
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] pb-24 font-sans">
-      
-      {/* Header / Top Bar */}
-      <div className="bg-white sticky top-0 z-20 border-b border-slate-100 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-           <div className="flex items-center gap-2">
-              <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-200">
-                  <Activity className="w-6 h-6" />
-              </div>
-              <span className="text-xl font-bold text-slate-800 tracking-tight">HealthPlus</span>
-           </div>
-           
-           <div className="flex items-center gap-4">
-              <Link href="/doctors">
-                <button className="p-2 text-slate-400 hover:text-blue-600 transition-colors">
-                    <Search className="w-6 h-6" />
-                </button>
-              </Link>
-              <button className="relative p-2 text-slate-400 hover:text-blue-600 transition-colors">
-                  <Bell className="w-6 h-6" />
-                  <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
-              </button>
-              <Link href="/user/profile">
-                <div className="w-10 h-10 rounded-full border-2 border-slate-100 overflow-hidden cursor-pointer">
-                    <img 
-                        src={getImageUrl(user.image, user._id, user.updatedAt)} 
-                        alt="Profile" 
-                        className="w-full h-full object-cover"
-                    />
-                </div>
-              </Link>
-           </div>
-        </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10">
+    <div className="min-h-screen bg-[#F8FAFC] pb-12 font-sans">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-12">
         
         {/* Welcome Section */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-                <h1 className="text-3xl font-bold text-slate-800 font-serif">
-                    Good Morning, {user.firstName}
+                <h1 className="text-4xl font-black text-slate-800 font-serif tracking-tight">
+                    Good Morning, <span className="text-[#70c0fa]">{user.firstName}</span>
                 </h1>
-                <p className="text-slate-500 mt-1">Here is your daily health overview</p>
+                <p className="text-slate-500 mt-1 font-medium">Here is your daily health overview</p>
             </div>
-            <div className="text-right hidden md:block">
-                <p className="text-2xl font-bold text-slate-800">{new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'long' })}</p>
-                <p className="text-sm font-bold text-slate-400 uppercase tracking-wider">{new Date().toLocaleDateString('en-US', { weekday: 'long' })}</p>
+            <div className="text-right hidden md:flex items-center gap-4 bg-white/50 backdrop-blur-xl px-6 py-3 rounded-3xl border border-white shadow-sm transition-transform hover:scale-105 duration-500">
+                <div className="text-right">
+                    <p className="text-2xl font-black text-slate-800 leading-none">{new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'long' })}</p>
+                    <p className="text-[10px] font-black text-[#70c0fa] uppercase tracking-widest mt-1">{new Date().toLocaleDateString('en-US', { weekday: 'long' })}</p>
+                </div>
+                <div className="w-10 h-10 rounded-2xl bg-[#70c0fa]/10 flex items-center justify-center text-[#70c0fa]">
+                    <Clock className="w-5 h-5" />
+                </div>
             </div>
         </div>
 
@@ -117,145 +116,173 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Next Appointment Card */}
             <div className="lg:col-span-2">
-                <div className="bg-gradient-to-br from-blue-600 to-indigo-600 rounded-[2.5rem] p-8 text-white shadow-2xl shadow-blue-200 relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
-                    <div className="absolute bottom-0 left-0 w-48 h-48 bg-black/10 rounded-full blur-3xl -ml-10 -mb-10 pointer-events-none"></div>
+                <div className="bg-gradient-to-br from-[#1E293B] to-[#0F172A] rounded-[3rem] p-10 text-white shadow-2xl relative overflow-hidden group cursor-pointer border border-white/5">
+                    <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#70c0fa]/10 rounded-full blur-[120px] -mr-32 -mt-32 transition-all group-hover:bg-[#70c0fa]/20 duration-1000"></div>
                     
-                    <div className="relative z-10 flex flex-col h-full justify-between min-h-[220px]">
+                    <div className="relative z-10 flex flex-col h-full justify-between min-h-[260px]">
                         <div className="flex justify-between items-start">
-                            <div>
-                                <h2 className="text-2xl font-bold mb-1">Next Appointment</h2>
+                            <div className="space-y-2">
+                                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-widest text-[#70c0fa]">
+                                    <Zap className="w-3 h-3 fill-[#70c0fa]" /> Upcoming
+                                </div>
+                                <h2 className="text-4xl font-black font-serif">Next Appointment</h2>
                                 {nextAppointment ? (
-                                    <p className="text-blue-100 font-medium">Don't forget your scheduled visit</p>
+                                    <p className="text-slate-400 font-medium">Your health journey continues on {new Date(nextAppointment.date).toLocaleDateString('en-US', { weekday: 'long' })}</p>
                                 ) : (
-                                    <p className="text-blue-100 font-medium">No upcoming appointments</p>
+                                    <p className="text-slate-400 font-medium">Ready for your next checkup?</p>
                                 )}
                             </div>
-                            <div className="bg-white/20 backdrop-blur-md p-3 rounded-2xl">
-                                <Calendar className="w-8 h-8 text-white" />
+                            <div className="bg-white/5 backdrop-blur-2xl p-5 rounded-[2rem] border border-white/10 shadow-xl group-hover:scale-110 group-hover:rotate-12 transition-all duration-700">
+                                <Calendar className="w-10 h-10 text-[#70c0fa]" />
                             </div>
                         </div>
 
                         {nextAppointment ? (
-                            <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 mt-6 flex items-center gap-4 border border-white/10">
-                                <div className="w-16 h-16 rounded-xl bg-white/20 overflow-hidden flex-shrink-0">
+                            <div className="bg-white/5 backdrop-blur-3xl rounded-[2.5rem] p-6 mt-8 flex items-center gap-6 border border-white/10 group-hover:bg-white/10 transition-colors duration-500">
+                                <div className="w-20 h-20 rounded-2xl bg-[#70c0fa]/20 overflow-hidden flex-shrink-0 border-2 border-white/10 relative">
                                      <img 
                                         src={getImageUrl(nextAppointment.doctor.user.image, nextAppointment.doctor._id)} 
                                         alt="Doctor" 
                                         className="w-full h-full object-cover"
                                      />
+                                     <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
                                 </div>
                                 <div className="flex-1">
-                                    <h3 className="font-bold text-lg">Dr. {nextAppointment.doctor.user.firstName} {nextAppointment.doctor.user.lastName}</h3>
-                                    <p className="text-blue-100 text-sm">{nextAppointment.doctor.specialization}</p>
+                                    <h3 className="font-black text-2xl tracking-tight">Dr. {nextAppointment.doctor.user.firstName} {nextAppointment.doctor.user.lastName}</h3>
+                                    <p className="text-[#70c0fa] text-sm font-black uppercase tracking-widest opacity-80 mt-1">{nextAppointment.doctor.specialization}</p>
                                 </div>
-                                <div className="text-right pl-4 border-l border-white/20">
-                                    <p className="font-bold text-lg">{nextAppointment.startTime}</p>
-                                    <p className="text-blue-100 text-xs uppercase font-bold">{new Date(nextAppointment.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</p>
+                                <div className="text-right pl-8 border-l border-white/10">
+                                    <p className="font-black text-3xl text-white leading-none">{nextAppointment.startTime}</p>
+                                    <p className="text-[#70c0fa] text-[10px] uppercase font-black tracking-widest mt-2">{new Date(nextAppointment.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</p>
                                 </div>
                             </div>
                         ) : (
                             <div className="mt-8">
                                 <Link href="/doctors">
-                                    <button className="bg-white text-blue-600 px-6 py-3 rounded-xl font-bold shadow-lg hover:shadow-xl hover:bg-blue-50 transition-all">
-                                        Book Now
+                                    <button className="bg-[#70c0fa] text-white px-10 py-5 rounded-2xl font-black text-lg shadow-xl shadow-[#70c0fa]/20 hover:shadow-2xl hover:bg-white hover:text-slate-900 transition-all duration-500 hover:-translate-y-1 active:translate-y-0">
+                                        Book New Session
                                     </button>
                                 </Link>
                             </div>
-                        )}
-                        
-                        {nextAppointment && (
-                            <Link href="/appointments" className="absolute bottom-0 right-0 p-4">
-                                <button className="flex items-center gap-2 text-sm font-bold text-white/80 hover:text-white transition-colors">
-                                    View Details <ChevronRight className="w-4 h-4" />
-                                </button>
-                            </Link>
                         )}
                     </div>
                 </div>
             </div>
 
-            {/* Daily Tip / Banner */}
-            <div className="bg-emerald-50 rounded-[2.5rem] p-8 border border-emerald-100 relative overflow-hidden flex flex-col justify-center">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-200/50 rounded-full blur-2xl -mr-10 -mt-10"></div>
+            {/* Daily Tip Card */}
+            <div className="bg-white/70 backdrop-blur-xl rounded-[3rem] p-10 border border-white shadow-xl shadow-blue-500/5 flex flex-col justify-between group hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-700">
+                <div>
+                    <div className="w-16 h-16 rounded-[1.5rem] bg-blue-50 flex items-center justify-center text-blue-600 mb-6 group-hover:scale-110 transition-transform duration-500">
+                        <Activity className="w-8 h-8" />
+                    </div>
+                    <h3 className="text-2xl font-black text-slate-900 mb-3 font-serif">Daily Health Tip</h3>
+                    <p className="text-slate-700 font-bold leading-relaxed border-l-4 border-[#70c0fa] pl-4 py-2 bg-blue-50/50 rounded-r-xl">
+                        "Staying hydrated improves energy levels and brain function. Drink at least 8 glasses today!"
+                    </p>
+                </div>
                 
-                <h3 className="text-xl font-bold text-emerald-900 mb-2 font-serif relative z-10">Daily Health Tip</h3>
-                <p className="text-emerald-700 font-medium leading-relaxed relative z-10 mb-6">
-                    "Staying hydrated improves energy levels and brain function. Drink at least 8 glasses today!"
-                </p>
-                <div className="flex items-center gap-3 relative z-10">
-                    <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600">
-                        <Activity className="w-5 h-5" />
-                    </div>
-                    <div>
-                         <p className="text-xs font-bold text-emerald-600 uppercase">Wellness</p>
-                         <p className="text-sm font-bold text-emerald-800">Vitality Check</p>
-                    </div>
+                <div className="flex items-center justify-between mt-8 pt-6 border-t border-slate-100">
+                     <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-500">
+                            <ShieldCheck className="w-5 h-5" />
+                        </div>
+                        <div>
+                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</p>
+                             <p className="text-sm font-black text-slate-900">Vitality Check</p>
+                        </div>
+                     </div>
+                     <TrendingUp className="w-6 h-6 text-[#70c0fa] animate-bounce" />
                 </div>
             </div>
         </div>
 
         {/* Quick Actions */}
         <div>
-            <h2 className="text-xl font-bold text-slate-800 mb-6 font-serif">Quick Actions</h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <ActionCard icon={<Search />} label="Find Doctor" color="bg-blue-50 text-blue-600" href="/doctors" />
-                <ActionCard icon={<Calendar />} label="My Appointments" color="bg-purple-50 text-purple-600" href="/appointments" />
-                <ActionCard icon={<FileText />} label="Medical Records" color="bg-orange-50 text-orange-600" href="#" />
-                <ActionCard icon={<Pill />} label="Prescriptions" color="bg-teal-50 text-teal-600" href="#" />
+            <div className="flex items-center gap-3 mb-8">
+                <div className="w-2 h-8 bg-[#70c0fa] rounded-full"></div>
+                <h2 className="text-3xl font-black text-slate-800 font-serif tracking-tight">Quick Navigation</h2>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+                <ActionCard icon={<Search />} label="Find Doctor" color="bg-blue-50 text-blue-600" href="/doctors" sub="Top specialists" />
+                <ActionCard icon={<Calendar />} label="My Schedule" color="bg-purple-50 text-purple-600" href="/appointments" sub="Manage visits" />
+                <ActionCard icon={<FileText />} label="E-Records" color="bg-orange-50 text-orange-600" href="/medical-records" sub="Health history" />
+                <ActionCard icon={<Pill />} label="Prescriptions" color="bg-teal-50 text-teal-600" href="/prescriptions" sub="Medication info" />
             </div>
         </div>
 
-        {/* Top/Recommended Doctors */}
-        <div>
-            <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold text-slate-800 font-serif">Top Rated Doctors</h2>
-                <Link href="/doctors" className="text-blue-600 font-bold text-sm hover:underline">View All</Link>
+        {/* Top Rated Doctors */}
+        <div className="gsap-reveal">
+            <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center gap-3">
+                    <div className="w-2 h-8 bg-[#70c0fa] rounded-full"></div>
+                    <h2 className="text-3xl font-black text-slate-900 font-serif tracking-tight">Top Specialists</h2>
+                </div>
+                <Link href="/doctors">
+                    <button className="group flex items-center gap-2 text-sm font-black text-[#70c0fa] bg-white/80 backdrop-blur-md px-5 py-2.5 rounded-full border border-white shadow-sm hover:bg-[#70c0fa] hover:text-white transition-all duration-500">
+                        EXPLORE ALL <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                    </button>
+                </Link>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {loading ? (
-                    [1,2,3,4].map(i => <div key={i} className="h-64 bg-slate-50 rounded-[2rem] animate-pulse" />)
+                    [1,2,3,4].map(i => <div key={i} className="h-80 bg-slate-50 rounded-[2.5rem] animate-pulse" />)
                 ) : (
-                    topDoctors.map(doctor => (
-                        <div key={doctor._id} className="bg-white p-4 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-300 group cursor-pointer" onClick={() => router.push(`/doctors/${doctor._id}`)}>
-                            <div className="w-full aspect-square rounded-[1.5rem] overflow-hidden mb-4 bg-slate-100 relative">
+                    topDoctors.map((doctor, idx) => (
+                        <div 
+                            key={doctor._id} 
+                            className="bg-white p-5 rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-2xl hover:shadow-[#70c0fa]/10 transition-all duration-700 group cursor-pointer relative overflow-hidden" 
+                            onClick={() => router.push(`/doctors/${doctor._id}`)}
+                        >
+                            <div className="w-full aspect-[4/5] rounded-[2rem] overflow-hidden mb-6 bg-slate-100 relative">
                                 <img 
                                     src={getImageUrl(doctor.user.image, doctor._id)} 
                                     alt="Doctor" 
-                                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                                    className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
                                 />
-                                <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full flex items-center gap-1 text-xs font-bold text-slate-800 shadow-sm">
-                                    <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                                <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+                                <div className="absolute top-4 right-4 bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-2xl flex items-center gap-1.5 text-xs font-black text-slate-800 shadow-xl border border-white/50">
+                                    <Star className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400" />
                                     {doctor.averageRating.toFixed(1)}
                                 </div>
                             </div>
-                            <h3 className="font-bold text-slate-800 truncate">Dr. {doctor.user.firstName} {doctor.user.lastName}</h3>
-                            <p className="text-slate-500 text-sm mb-3 truncate">{doctor.specialization}</p>
-                            <div className="flex items-center justify-between">
-                                <p className="font-bold text-blue-600">${doctor.fees}</p>
-                                <button className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-blue-600 hover:text-white transition-all">
-                                    <ChevronRight className="w-4 h-4" />
-                                </button>
+                            <div className="relative z-10">
+                                <h3 className="font-black text-xl text-slate-900 tracking-tight transition-colors group-hover:text-[#70c0fa]">Dr. {doctor.user.firstName} {doctor.user.lastName}</h3>
+                                <p className="text-slate-500 text-xs font-black uppercase tracking-widest mt-1">{doctor.specialization}</p>
+                                <div className="flex items-center justify-between mt-6 pt-5 border-t border-slate-100">
+                                    <div>
+                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-tighter leading-none">CONSULTATION</p>
+                                        <p className="font-black text-2xl text-slate-900 mt-1">${doctor.fees}</p>
+                                    </div>
+                                    <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600 group-hover:bg-[#70c0fa] group-hover:text-white transition-all duration-500 group-hover:rotate-12 group-hover:shadow-lg">
+                                        <ChevronRight className="w-6 h-6" />
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     ))
                 )}
             </div>
         </div>
-
       </div>
     </div>
   );
 }
 
-function ActionCard({ icon, label, color, href }: any) {
+function ActionCard({ icon, label, color, href, sub }: any) {
     return (
-        <Link href={href} className={`p-6 rounded-[2rem] border border-slate-50 shadow-sm hover:shadow-lg transition-all duration-300 group bg-white flex flex-col items-center justify-center gap-4 text-center cursor-pointer`}>
-            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 ${color}`}>
-                {React.cloneElement(icon, { className: "w-7 h-7" })}
+        <Link href={href}>
+            <div 
+                className="bg-white/80 backdrop-blur-xl p-8 rounded-[2.5rem] border border-white shadow-xl shadow-blue-500/5 hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-500 group flex flex-col items-center justify-center gap-5 text-center cursor-pointer h-full hover:scale-[1.05] active:scale-[0.98]"
+            >
+                <div className={`w-20 h-20 rounded-3xl flex items-center justify-center transition-all duration-700 shadow-inner group-hover:scale-110 group-hover:shadow-lg ${color}`}>
+                    {React.cloneElement(icon, { className: "w-10 h-10" })}
+                </div>
+                <div className="space-y-1">
+                    <p className="font-black text-slate-900 text-lg group-hover:text-[#70c0fa] transition-colors">{label}</p>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{sub}</p>
+                </div>
             </div>
-            <span className="font-bold text-slate-700 group-hover:text-slate-900">{label}</span>
         </Link>
     );
 }

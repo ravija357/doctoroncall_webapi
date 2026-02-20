@@ -26,5 +26,10 @@ export const doctorService = {
     updateSchedule: async (schedules: any[]) => {
         const res = await api.put<{ success: boolean; data: Doctor }>('/doctors/profile/schedule', { schedules });
         return res.data.data;
+    },
+
+    updateProfile: async (data: Partial<Doctor>) => {
+        const res = await api.put<{ success: boolean; data: Doctor }>('/doctors/profile', data);
+        return res.data.data;
     }
 };

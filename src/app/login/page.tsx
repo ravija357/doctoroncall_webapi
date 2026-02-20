@@ -28,9 +28,9 @@ export default function LoginPage() {
           }
           footer={undefined}
         >
-          <FeatureItem icon={<CheckCircle2 className="text-blue-300" />} text="Instant Booking with 500+ Specialists" />
-          <FeatureItem icon={<CheckCircle2 className="text-blue-300" />} text="Secure Electronic Medical Records" />
-          <FeatureItem icon={<CheckCircle2 className="text-blue-300" />} text="24/7 Access to Care Dashboard" />
+          <FeatureItem icon={<CheckCircle2 className="text-primary-light" />} text="Instant Booking with 500+ Specialists" />
+          <FeatureItem icon={<CheckCircle2 className="text-primary-light" />} text="Secure Electronic Medical Records" />
+          <FeatureItem icon={<CheckCircle2 className="text-primary-light" />} text="24/7 Access to Care Dashboard" />
         </AuthSidebar>
       }
     >
@@ -45,7 +45,7 @@ export default function LoginPage() {
         <h2 className="text-3xl font-black tracking-tight text-slate-900">Welcome back</h2>
         <p className="mt-2 text-sm text-slate-500 font-medium">
           Don't have an account?{" "}
-          <Link href="/register" className="font-bold text-blue-600 hover:text-blue-500 underline-offset-4 hover:underline">
+          <Link href="/register" className="font-bold text-primary hover:text-primary-hover underline-offset-4 hover:underline">
             Create an account
           </Link>
         </p>
@@ -71,7 +71,7 @@ export default function LoginPage() {
             <div className="flex items-center justify-between">
               <Label htmlFor="password" title="password" className="text-slate-700 font-bold">Password</Label>
               <div className="text-sm">
-                <Link href="#" className="font-bold text-blue-600 hover:text-blue-500">
+                <Link href="#" className="font-bold text-primary hover:text-primary-hover">
                   Forgot password?
                 </Link>
               </div>
@@ -96,7 +96,7 @@ export default function LoginPage() {
             </div>
           )}
 
-          <Button type="submit" className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg shadow-blue-200 transition-all hover:-translate-y-0.5" disabled={isLoading}>
+          <Button type="submit" className="w-full h-12 bg-primary hover:bg-primary-hover text-white font-bold rounded-xl shadow-lg shadow-primary/30 transition-all hover:-translate-y-0.5" disabled={isLoading}>
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-5 w-5 animate-spin" />

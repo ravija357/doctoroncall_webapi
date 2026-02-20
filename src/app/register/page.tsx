@@ -23,7 +23,7 @@ export default function RegisterPage() {
           bgClassName="bg-slate-900"
           badgeContent={
             <>
-              <ShieldCheck className="h-4 w-4 text-blue-400" />
+              <ShieldCheck className="h-4 w-4 text-primary-light" />
               HIPAA Compliant Security
             </>
           }
@@ -33,8 +33,8 @@ export default function RegisterPage() {
             Whether you're a provider or a patient, we offer the tools you need for a better care experience.
           </p>
           <div className="grid grid-cols-2 gap-8">
-            <BenefitBox icon={<Users className="text-blue-400" />} title="Patients" desc="Verified specialists in one click." />
-            <BenefitBox icon={<Activity className="text-blue-400" />} title="Doctors" desc="Manage appointments seamlessly." />
+            <BenefitBox icon={<Users className="text-primary-light" />} title="Patients" desc="Verified specialists in one click." />
+            <BenefitBox icon={<Activity className="text-primary-light" />} title="Doctors" desc="Manage appointments seamlessly." />
           </div>
         </AuthSidebar>
       }
@@ -50,7 +50,7 @@ export default function RegisterPage() {
         <h2 className="text-3xl font-black tracking-tight text-slate-900">Create account</h2>
         <p className="mt-2 text-sm text-slate-500 font-medium">
           Already have an account?{" "}
-          <Link href="/login" className="font-bold text-blue-600 hover:text-blue-500 underline-offset-4 hover:underline">
+          <Link href="/login" className="font-bold text-primary hover:text-primary-hover underline-offset-4 hover:underline">
             Sign in
           </Link>
         </p>
@@ -128,7 +128,7 @@ export default function RegisterPage() {
           </div>
         )}
 
-        <Button type="submit" className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg shadow-blue-200" disabled={isLoading}>
+        <Button type="submit" className="w-full h-12 bg-primary hover:bg-primary-hover text-white font-bold rounded-xl shadow-lg shadow-primary/30" disabled={isLoading}>
           {isLoading ? (
             <>
               <Loader2 className="mr-2 h-5 w-5 animate-spin" />

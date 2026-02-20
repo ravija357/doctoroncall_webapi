@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import Hero3D from "@/components/ui/hero-3d";
 import { 
   ArrowRight, 
   Calendar, 
@@ -14,7 +13,8 @@ import {
   Baby,
   Stethoscope,
   Microscope,
-  Award
+  Award,
+  HeartPulse
 } from "lucide-react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef } from "react";
@@ -44,12 +44,12 @@ export default function HomePage() {
   const opacity = useTransform(scrollYProgress, [0, 0.2, 0.8, 1], [0, 1, 1, 0]);
 
   return (
-    <div className="flex flex-col min-h-screen bg-slate-50/50 overflow-hidden font-sans selection:bg-emerald-500/20">
+    <div className="flex flex-col min-h-screen bg-white overflow-hidden font-sans selection:bg-primary/20">
       
-      {/* Decorative Background Blobs */}
+      {/* Decorative Background Blobs - Now using primary color */}
       <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden">
-         <div className="absolute -top-[20%] -right-[10%] w-[70vw] h-[70vw] bg-emerald-400/5 rounded-full blur-[120px]" />
-         <div className="absolute top-[20%] -left-[10%] w-[50vw] h-[50vw] bg-blue-400/5 rounded-full blur-[100px]" />
+         <div className="absolute -top-[20%] -right-[10%] w-[70vw] h-[70vw] bg-primary-light/20 rounded-full blur-[120px]" />
+         <div className="absolute top-[20%] -left-[10%] w-[50vw] h-[50vw] bg-primary/10 rounded-full blur-[100px]" />
       </div>
 
       {/* Hero Section */}
@@ -63,17 +63,17 @@ export default function HomePage() {
             variants={staggerContainer}
             className="flex-1 space-y-10 text-center lg:text-left z-10"
           >
-            <motion.div variants={fadeIn} className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-emerald-100 shadow-sm shadow-emerald-500/5">
+            <motion.div variants={fadeIn} className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-primary-light/50 shadow-sm shadow-primary/10">
                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
                 </span>
-               <span className="text-xs font-bold text-slate-500 tracking-wide uppercase">Top Rated Medical Platform</span>
+               <span className="text-xs font-bold text-primary tracking-wide uppercase">Top Rated Medical Platform</span>
             </motion.div>
             
             <motion.h1 variants={fadeIn} className="text-6xl lg:text-8xl font-black text-slate-900 tracking-tighter leading-[0.9]">
-              Heal<span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 to-blue-500">th.</span><br />
-              Simplifi<span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-emerald-500">ed.</span>
+              Heal<span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-primary-hover">th.</span><br />
+              Simplifi<span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-hover to-primary">ed.</span>
             </motion.h1>
             
             <motion.p variants={fadeIn} className="text-xl text-slate-500 leading-relaxed max-w-2xl mx-auto lg:mx-0 font-medium">
@@ -82,12 +82,12 @@ export default function HomePage() {
             
             <motion.div variants={fadeIn} className="flex flex-col sm:flex-row justify-center lg:justify-start gap-5">
               <Link href="/doctors">
-                 <Button className="h-14 px-10 rounded-full bg-slate-900 text-white hover:bg-slate-800 shadow-xl shadow-slate-900/10 font-bold text-lg transition-all hover:scale-105 active:scale-95 uppercase tracking-wide">
+                 <Button className="h-14 px-10 rounded-full bg-primary text-white hover:bg-primary-hover shadow-xl shadow-primary/30 font-bold text-lg transition-all hover:scale-105 active:scale-95 uppercase tracking-wide">
                     Find a Doctor
                  </Button>
               </Link>
               <Link href="/register">
-                 <Button variant="outline" className="h-14 px-10 rounded-full border-slate-200 text-slate-600 hover:bg-white hover:text-slate-900 font-bold text-lg transition-all hover:scale-105 active:scale-95 uppercase tracking-wide bg-white/50 backdrop-blur-sm">
+                 <Button variant="outline" className="h-14 px-10 rounded-full border-primary-light text-primary hover:bg-primary/5 hover:text-primary-hover font-bold text-lg transition-all hover:scale-105 active:scale-95 uppercase tracking-wide bg-white backdrop-blur-sm">
                     Join Network
                  </Button>
               </Link>
@@ -101,8 +101,13 @@ export default function HomePage() {
           </motion.div>
 
           {/* 3D Visual */}
-          <div className="flex-1 w-full max-w-xl lg:max-w-none relative z-0">
-             <Hero3D />
+          <div className="flex-1 w-full max-w-xl lg:max-w-none relative z-0 flex items-center justify-center">
+             <div className="w-[80%] aspect-square bg-gradient-to-br from-primary/10 to-primary-hover/5 rounded-[3rem] blur-2xl animate-pulse" />
+             <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-32 h-32 rounded-3xl bg-white/40 backdrop-blur-xl border border-white/20 shadow-2xl flex items-center justify-center">
+                   <HeartPulse className="w-16 h-16 text-primary" />
+                </div>
+             </div>
           </div>
 
         </div>
@@ -114,8 +119,8 @@ export default function HomePage() {
             <div className="bg-slate-900 rounded-[3rem] p-12 lg:p-20 text-white shadow-2xl relative overflow-hidden">
                {/* Background Pattern */}
                <div className="absolute inset-0 opacity-10">
-                   <div className="absolute -top-20 -left-20 w-96 h-96 bg-blue-500 rounded-full blur-[100px]" />
-                   <div className="absolute -bottom-20 -right-20 w-96 h-96 bg-emerald-500 rounded-full blur-[100px]" />
+                   <div className="absolute -top-20 -left-20 w-96 h-96 bg-primary rounded-full blur-[100px]" />
+                   <div className="absolute -bottom-20 -right-20 w-96 h-96 bg-primary-light rounded-full blur-[100px]" />
                </div>
 
                <div className="relative z-10 grid grid-cols-2 md:grid-cols-4 gap-12 text-center divider-x divider-white/10">
@@ -137,25 +142,25 @@ export default function HomePage() {
          
          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <CategoryCard 
-               icon={<Heart className="w-8 h-8 text-rose-500" />} 
+               icon={<Heart className="w-8 h-8 text-primary" />} 
                title="Cardiology" 
                desc="Heart health experts"
                delay={0}
             />
             <CategoryCard 
-               icon={<Brain className="w-8 h-8 text-violet-500" />} 
+               icon={<Brain className="w-8 h-8 text-primary" />} 
                title="Neurology" 
                desc="Brain & nervous system"
                delay={0.1}
             />
              <CategoryCard 
-               icon={<Baby className="w-8 h-8 text-sky-500" />} 
+               icon={<Baby className="w-8 h-8 text-primary" />} 
                title="Pediatrics" 
                desc="Child healthcare"
                delay={0.2}
             />
              <CategoryCard 
-               icon={<Microscope className="w-8 h-8 text-emerald-500" />} 
+               icon={<Microscope className="w-8 h-8 text-primary" />} 
                title="Diagnostics" 
                desc="Lab & pathology"
                delay={0.3}
@@ -164,9 +169,9 @@ export default function HomePage() {
          
          <div className="flex justify-center mt-16">
             <Link href="/doctors">
-                <Button variant="link" className="group text-lg font-bold text-slate-900 hover:no-underline">
+                <Button variant="link" className="group text-lg font-bold text-primary hover:no-underline">
                    View all specialities 
-                   <span className="ml-2 w-8 h-8 rounded-full bg-slate-100 group-hover:bg-slate-900 group-hover:text-white flex items-center justify-center transition-all">
+                   <span className="ml-2 w-8 h-8 rounded-full bg-primary/10 group-hover:bg-primary group-hover:text-white flex items-center justify-center transition-all">
                       <ArrowRight className="w-4 h-4" />
                    </span>
                 </Button>
@@ -227,13 +232,13 @@ export default function HomePage() {
                                </div>
                            </div>
                            
-                           <Button className="w-full h-12 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold shadow-lg shadow-emerald-200">
+                           <Button className="w-full h-12 rounded-xl bg-primary hover:bg-primary-hover text-white font-bold shadow-lg shadow-primary/30 transition-colors">
                                Start Video Call
                            </Button>
                        </motion.div>
                        
                        {/* Abstract shapes */}
-                       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-gradient-to-tr from-blue-100/50 to-emerald-100/50 rounded-full blur-3xl -z-10" />
+                       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-radial from-primary/20 to-transparent rounded-full blur-3xl -z-10" />
                    </div>
                </div>
            </div>
@@ -256,8 +261,8 @@ export default function HomePage() {
                
                {/* Background Glows */}
                <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
-                    <div className="absolute -top-[50%] left-[20%] w-[500px] h-[500px] bg-blue-600/20 rounded-full blur-[120px]" />
-                    <div className="absolute -bottom-[50%] right-[20%] w-[500px] h-[500px] bg-emerald-600/20 rounded-full blur-[120px]" />
+                    <div className="absolute -top-[50%] left-[20%] w-[500px] h-[500px] bg-primary/20 rounded-full blur-[120px]" />
+                    <div className="absolute -bottom-[50%] right-[20%] w-[500px] h-[500px] bg-primary-light/20 rounded-full blur-[120px]" />
                </div>
           </div>
       </section>
@@ -285,8 +290,8 @@ function CategoryCard({ icon, title, desc, delay }: { icon: React.ReactNode, tit
             whileHover={{ y: -10 }}
             className="group bg-white p-8 rounded-[2.5rem] border border-slate-100 hover:border-slate-200 shadow-sm hover:shadow-2xl hover:shadow-slate-200/50 transition-all duration-500 cursor-pointer"
         >
-            <div className="w-16 h-16 rounded-2xl bg-slate-50 group-hover:bg-slate-900 transition-colors duration-500 flex items-center justify-center mb-6">
-                <div className="transition-transform duration-500 group-hover:scale-110">
+            <div className="w-16 h-16 rounded-2xl bg-primary/10 group-hover:bg-primary transition-colors duration-500 flex items-center justify-center mb-6">
+                <div className="transition-transform duration-500 group-hover:scale-110 group-hover:text-white text-primary">
                     {icon}
                 </div>
             </div>
@@ -299,7 +304,7 @@ function CategoryCard({ icon, title, desc, delay }: { icon: React.ReactNode, tit
 function ProcessStep({ num, title, desc }: { num: string, title: string, desc: string }) {
     return (
         <div className="flex gap-8 group">
-             <div className="text-2xl font-bold text-slate-200 group-hover:text-emerald-500 transition-colors pt-1 font-mono">
+             <div className="text-2xl font-bold text-slate-200 group-hover:text-primary transition-colors pt-1 font-mono">
                  {num}
              </div>
              <div className="space-y-2">

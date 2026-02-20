@@ -5,16 +5,33 @@ import { useAuth } from "@/context/AuthContext";
 import { appointmentService } from "@/services/appointment.service";
 import { doctorService } from "@/services/doctor.service";
 import { Appointment, Doctor } from "@/types";
-import { TrendingUp, DollarSign, Calendar, ArrowUpRight, ChevronLeft } from "lucide-react";
+import { TrendingUp, DollarSign, Calendar, ArrowUpRight, ChevronLeft, Pencil } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useSocket } from "@/context/SocketContext";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 export default function DoctorRevenuePage() {
     const { user, isAuthenticated, isLoading: authLoading } = useAuth();
     const router = useRouter();
+    const { socket } = useSocket();
     const [appointments, setAppointments] = useState<Appointment[]>([]);
     const [doctorProfile, setDoctorProfile] = useState<Doctor | null>(null);
     const [loading, setLoading] = useState(true);
+    const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+    const [newFee, setNewFee] = useState<string>("");
+    const [isUpdating, setIsUpdating] = useState(false);
 
     useEffect(() => {
         if (!authLoading) {
@@ -34,12 +51,58 @@ export default function DoctorRevenuePage() {
             ]);
             setAppointments(appts);
             setDoctorProfile(profile);
+            if (profile) setNewFee(profile.fees.toString());
         } catch (err) {
             console.error("Failed to fetch data", err);
         } finally {
             setLoading(false);
         }
     };
+
+    const handleUpdateFee = async () => {
+        if (!newFee || isNaN(Number(newFee)) || Number(newFee) < 0) {
+            toast.error("Please enter a valid fee amount");
+            return;
+        }
+
+        setIsUpdating(true);
+        try {
+            const updated = await doctorService.updateProfile({ fees: Number(newFee) });
+            setDoctorProfile(updated);
+            setIsEditDialogOpen(false);
+            toast.success("Consultation fee updated successfully!");
+        } catch (err: any) {
+            console.error("Failed to update fee:", err);
+            toast.error(err.response?.data?.message || "Failed to update fee");
+        } finally {
+            setIsUpdating(false);
+        }
+    };
+
+    // Connect socket listener for real-time revenue updates
+    useEffect(() => {
+        if (!socket || !doctorProfile) return;
+
+        const handleAppointmentUpdate = (data: { doctorId: string }) => {
+            if (data.doctorId === doctorProfile._id) {
+                console.log("[Revenue] Appointment updated globally, fetching new revenue data...");
+                fetchData();
+            }
+        };
+
+        socket.on('appointment_updated', handleAppointmentUpdate);
+        socket.on('doctor_profile_updated', (data: { doctorId: string }) => {
+            if (doctorProfile && data.doctorId === doctorProfile._id) {
+                console.log("[Revenue] Profile updated globally, refreshing...");
+                fetchData();
+            }
+        });
+
+        return () => {
+            socket.off('appointment_updated', handleAppointmentUpdate);
+            socket.off('doctor_profile_updated');
+        };
+    }, [socket, doctorProfile]);
 
     if (authLoading || loading) {
         return (
@@ -80,35 +143,72 @@ export default function DoctorRevenuePage() {
 
                 {/* Stats Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-                    <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-[2rem] p-6 text-white shadow-lg shadow-emerald-100 relative overflow-hidden">
-                        <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -mr-6 -mt-6 blur-xl"></div>
-                        <div className="relative z-10">
-                            <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center mb-4">
-                                <DollarSign className="w-6 h-6 text-white" />
+                    <div className="bg-[#70c0fa] rounded-[2.5rem] p-8 text-white shadow-xl shadow-blue-200/50 relative overflow-hidden border border-blue-400/20">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-white/20 rounded-full blur-2xl -mr-10 -mt-10"></div>
+                        <div className="relative z-10 flex flex-col items-center text-center">
+                            <div className="w-16 h-16 rounded-3xl bg-white/20 backdrop-blur-sm p-4 mb-4 flex items-center justify-center shadow-inner relative group">
+                                <DollarSign className="w-8 h-8 text-white group-hover:scale-110 transition-transform" />
                             </div>
-                            <p className="text-emerald-100 font-medium mb-1">Total Revenue</p>
-                            <h3 className="text-4xl font-bold tracking-tight">${totalRevenue.toLocaleString()}</h3>
+                            <p className="text-white/90 font-bold uppercase tracking-widest text-xs mb-2">Total Revenue</p>
+                            <h3 className="text-5xl font-black font-serif">${totalRevenue.toLocaleString()}</h3>
                         </div>
                     </div>
 
-                    <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-slate-100">
-                        <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center mb-4">
-                            <TrendingUp className="w-6 h-6 text-blue-600" />
+                    <div className="bg-white rounded-[2.5rem] p-8 shadow-md shadow-slate-200/50 border border-slate-100 flex flex-col items-center text-center">
+                        <div className="w-16 h-16 rounded-3xl bg-blue-50/80 flex items-center justify-center mb-4">
+                            <TrendingUp className="w-8 h-8 text-[#70c0fa]" />
                         </div>
-                        <p className="text-slate-500 font-medium mb-1">This Month</p>
-                        <h3 className="text-3xl font-bold text-slate-800">${monthlyRevenue.toLocaleString()}</h3>
-                        <div className="mt-2 text-xs font-bold text-emerald-600 bg-emerald-50 inline-block px-2 py-1 rounded-full uppercase tracking-wide">
+                        <p className="text-slate-400 font-bold uppercase tracking-widest text-xs mb-2">This Month</p>
+                        <h3 className="text-4xl font-black text-slate-800 font-serif mb-3">${monthlyRevenue.toLocaleString()}</h3>
+                        <div className="text-[10px] font-bold text-[#70c0fa] bg-blue-50 px-3 py-1.5 rounded-full uppercase tracking-wider">
                             Active Period
                         </div>
                     </div>
 
-                    <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-slate-100">
-                        <div className="w-12 h-12 rounded-2xl bg-purple-50 flex items-center justify-center mb-4">
-                            <Calendar className="w-6 h-6 text-purple-600" />
+                    <div className="bg-white rounded-[2.5rem] p-8 shadow-md shadow-slate-200/50 border border-slate-100 flex flex-col items-center text-center group relative">
+                        <div className="w-16 h-16 rounded-3xl bg-blue-50/80 flex items-center justify-center mb-4">
+                            <Calendar className="w-8 h-8 text-[#70c0fa]" />
                         </div>
-                        <p className="text-slate-500 font-medium mb-1">Consultation Fee</p>
-                        <h3 className="text-3xl font-bold text-slate-800">${fees}</h3>
-                        <p className="text-xs text-slate-400 font-bold mt-2 uppercase tracking-wide">Per Appointment</p>
+                        <p className="text-slate-400 font-bold uppercase tracking-widest text-xs mb-2">Consultation Fee</p>
+                        <h3 className="text-4xl font-black text-slate-800 font-serif mb-3">${fees}</h3>
+                        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+                            <DialogTrigger asChild>
+                                <button className="absolute top-6 right-6 p-2 rounded-xl bg-slate-50 text-slate-400 hover:text-[#70c0fa] hover:bg-blue-50 transition-all opacity-0 group-hover:opacity-100">
+                                    <Pencil className="w-4 h-4" />
+                                </button>
+                            </DialogTrigger>
+                            <DialogContent className="sm:max-w-[425px] rounded-[2rem]">
+                                <DialogHeader>
+                                    <DialogTitle className="text-2xl font-serif text-slate-800">Update Consultation Fee</DialogTitle>
+                                    <DialogDescription className="text-slate-500">
+                                        Set your standard fee for each appointment.
+                                    </DialogDescription>
+                                </DialogHeader>
+                                <div className="py-6">
+                                    <div className="flex flex-col gap-2">
+                                        <label htmlFor="price" className="text-sm font-bold text-slate-600 ml-1">Fee Amount ($)</label>
+                                        <Input
+                                            id="price"
+                                            type="number"
+                                            value={newFee}
+                                            onChange={(e) => setNewFee(e.target.value)}
+                                            className="rounded-xl border-slate-200 focus:border-[#70c0fa] focus:ring-[#70c0fa] p-6 text-lg"
+                                            placeholder="e.g. 50"
+                                        />
+                                    </div>
+                                </div>
+                                <DialogFooter>
+                                    <Button 
+                                        onClick={handleUpdateFee}
+                                        disabled={isUpdating}
+                                        className="w-full h-14 bg-[#70c0fa] hover:bg-[#68A6CB] text-white font-bold rounded-xl text-lg shadow-lg shadow-blue-100 transition-all"
+                                    >
+                                        {isUpdating ? "Updating..." : "Save Changes"}
+                                    </Button>
+                                </DialogFooter>
+                            </DialogContent>
+                        </Dialog>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-1">Per Appointment</p>
                     </div>
                 </div>
 
@@ -135,14 +235,14 @@ export default function DoctorRevenuePage() {
                                                 <div className="text-xs text-slate-400 font-normal">{appt.startTime}</div>
                                             </td>
                                             <td className="py-4 border-b border-slate-50">
-                                                <div className="font-bold text-slate-800">{appt.patient.firstName} {appt.patient.lastName}</div>
-                                                <div className="text-xs text-slate-500">ID: #{appt.patient._id.slice(-4)}</div>
+                                                <div className="font-bold text-slate-800">{appt.patient?.firstName || 'Unknown'} {appt.patient?.lastName || 'Patient'}</div>
+                                                <div className="text-xs text-slate-500">ID: #{appt.patient?._id?.slice(-4) || '0000'}</div>
                                             </td>
                                             <td className="py-4 text-slate-600 border-b border-slate-50">
                                                 Consultation
                                             </td>
                                             <td className="py-4 text-right pr-4 border-b border-slate-50">
-                                                <span className="font-bold text-emerald-600">+${fees}</span>
+                                                <span className="font-bold text-[#70c0fa]">+${fees}</span>
                                             </td>
                                         </tr>
                                     ))}

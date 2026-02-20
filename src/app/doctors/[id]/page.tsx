@@ -8,10 +8,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/context/AuthContext";
-import { Loader2, ArrowLeft, Phone, Share2, Star, Clock, DollarSign, MapPin } from "lucide-react";
+import { Loader2, ArrowLeft, Phone, Share2, Star, Clock, DollarSign, MapPin, MessageSquare } from "lucide-react";
 import api from "@/services/api";
 import Link from "next/link";
 import { useSocket } from "@/context/SocketContext";
+import { reviewService } from "@/services/review.service";
 import { getImageUrl } from "@/utils/imageHelper";
 
 export default function DoctorDetailsPage() {
@@ -25,6 +26,13 @@ export default function DoctorDetailsPage() {
     const [selectedSlot, setSelectedSlot] = useState<{ startTime: string; endTime: string } | null>(null);
     const [reason, setReason] = useState("");
     const [bookingLoading, setBookingLoading] = useState(false);
+
+    // Rating State
+    const [isRatingModalOpen, setIsRatingModalOpen] = useState(false);
+    const [ratingValue, setRatingValue] = useState(0);
+    const [hoverRating, setHoverRating] = useState(0);
+    const [reviewComment, setReviewComment] = useState("");
+    const [submittingReview, setSubmittingReview] = useState(false);
 
     // Fetch Doctor Details
     useEffect(() => {
@@ -71,12 +79,61 @@ export default function DoctorDetailsPage() {
             }
         };
 
+        const handleRatingUpdate = (data: { doctorId: string, averageRating: number, totalReviews: number }) => {
+            if (data.doctorId === id) {
+                setDoctor(prev => prev ? { ...prev, averageRating: data.averageRating, totalReviews: data.totalReviews } : null);
+            }
+        };
+
         socket.on('schedule_updated', handleScheduleUpdate);
+        socket.on('doctor_rating_updated', handleRatingUpdate);
+        socket.on('doctor_profile_updated', (data: { doctorId: string, fees: number }) => {
+            if (data.doctorId === id) {
+                setDoctor(prev => prev ? { ...prev, fees: data.fees } : null);
+            }
+        });
 
         return () => {
             socket.off('schedule_updated', handleScheduleUpdate);
+            socket.off('doctor_rating_updated', handleRatingUpdate);
+            socket.off('doctor_profile_updated');
         };
     }, [socket, id, bookingDate]);
+
+    const submitRating = async () => {
+        if (!user) {
+            router.push('/login');
+            return;
+        }
+        if (ratingValue === 0 || !doctor) return;
+        setSubmittingReview(true);
+        try {
+            // We just close the modal so it feels snappy, the socket listener will 
+            // instantly update the UI with the 100% accurate database-calculated average
+            closeRatingModal();
+            
+            await reviewService.createReview({
+                doctorId: doctor._id,
+                rating: ratingValue,
+                comment: reviewComment
+            });
+            
+            // We can optionally show a small toast, but no blocking alert
+            console.log("Review submitted successfully");
+        } catch (err: any) {
+            console.error(err);
+            alert(err.message || "Failed to submit review.");
+        } finally {
+            setSubmittingReview(false);
+        }
+    };
+
+    const closeRatingModal = () => {
+        setIsRatingModalOpen(false);
+        setRatingValue(0);
+        setHoverRating(0);
+        setReviewComment("");
+    };
 
     const handleBook = async () => {
         if (!user) {
@@ -155,10 +212,22 @@ export default function DoctorDetailsPage() {
                         <span className="font-bold text-slate-700">{doctor.averageRating.toFixed(1)}</span>
                         <span className="text-gray-400 text-sm">({doctor.totalReviews} reviews)</span>
                     </div>
+
+                    <div className="mt-4">
+                        <Button 
+                            onClick={() => {
+                                if (!user) router.push('/login');
+                                else setIsRatingModalOpen(true);
+                            }}
+                            className="bg-yellow-400 hover:bg-yellow-500 text-yellow-900 font-bold rounded-full px-6 shadow-sm hover:scale-105 transition-all"
+                        >
+                            <Star className="w-4 h-4 mr-2 fill-yellow-900" /> Rate Doctor
+                        </Button>
+                    </div>
                 </div>
 
                 {/* Quick Stats */}
-                <div className="grid grid-cols-3 gap-4 mb-8">
+                <div className="grid grid-cols-2 gap-4 mb-8 max-w-sm mx-auto">
                     <div className="bg-slate-50 p-4 rounded-2xl text-center">
                         <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-2 text-blue-600">
                             <Clock className="w-5 h-5" />
@@ -172,13 +241,6 @@ export default function DoctorDetailsPage() {
                         </div>
                         <p className="text-sm font-bold text-slate-700">${doctor.fees}</p>
                         <p className="text-xs text-slate-400">Consultation</p>
-                    </div>
-                    <div className="bg-slate-50 p-4 rounded-2xl text-center">
-                        <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-2 text-purple-600">
-                            <MapPin className="w-5 h-5" />
-                        </div>
-                        <p className="text-sm font-bold text-slate-700">800m</p>
-                        <p className="text-xs text-slate-400">Distance</p>
                     </div>
                 </div>
 
@@ -275,6 +337,70 @@ export default function DoctorDetailsPage() {
                     </Button>
                 </div>
             </div>
+
+            {/* Rating Modal */}
+            {isRatingModalOpen && (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="bg-white p-8 rounded-[2rem] shadow-2xl border border-slate-100 max-w-md w-full mx-4 animate-in zoom-in-95 duration-200">
+                        <h3 className="text-2xl font-bold font-serif text-slate-800 mb-2">Rate your experience</h3>
+                        <p className="text-slate-500 text-sm mb-6">
+                            How was your experience with <span className="font-bold">Dr. {doctor.user.lastName}</span>?
+                        </p>
+                        
+                        <div className="flex justify-center gap-2 mb-8">
+                            {[1, 2, 3, 4, 5].map((star) => (
+                                <button 
+                                    key={star}
+                                    type="button"
+                                    onClick={() => setRatingValue(star)}
+                                    onMouseEnter={() => setHoverRating(star)}
+                                    onMouseLeave={() => setHoverRating(0)}
+                                    className="p-1 transition-transform hover:scale-110 focus:outline-none"
+                                >
+                                    <Star 
+                                        className={`w-10 h-10 ${
+                                            star <= (hoverRating || ratingValue)
+                                                ? "fill-yellow-400 text-yellow-400 drop-shadow-sm" 
+                                                : "text-slate-200"
+                                        } transition-colors duration-150`}
+                                    />
+                                </button>
+                            ))}
+                        </div>
+
+                        <div className="mb-6">
+                            <label className="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-2">
+                                <MessageSquare className="w-4 h-4 text-slate-400" /> Optional Comment
+                            </label>
+                            <textarea 
+                                value={reviewComment}
+                                onChange={(e) => setReviewComment(e.target.value)}
+                                placeholder="Share details of your experience..."
+                                className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-sm focus:ring-2 focus:ring-[#70c0fa] focus:border-transparent outline-none transition-all resize-none h-24 text-slate-700 placeholder:text-slate-400"
+                                maxLength={500}
+                            />
+                        </div>
+
+                        <div className="flex justify-end gap-3">
+                            <Button 
+                                onClick={closeRatingModal} 
+                                variant="ghost" 
+                                disabled={submittingReview}
+                                className="text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-xl"
+                            >
+                                Cancel
+                            </Button>
+                            <Button 
+                                onClick={submitRating} 
+                                disabled={ratingValue === 0 || submittingReview}
+                                className="bg-[#70c0fa] hover:opacity-90 text-white shadow-lg shadow-blue-200 rounded-xl px-8 transition-opacity"
+                            >
+                                {submittingReview ? "Submitting..." : "Submit Review"}
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
