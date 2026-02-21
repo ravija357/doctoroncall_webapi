@@ -50,7 +50,7 @@ export default function DoctorCard({ doctor }: DoctorCardProps) {
           {/* Stats Row */}
           <div className="flex items-center justify-between py-4 border-y border-slate-50 px-4">
             <div className="text-center flex-1">
-              <p className="text-sm font-black text-slate-800">${doctor.fees}</p>
+              <p className="text-sm font-black text-slate-800">Rs. {doctor.fees}</p>
               <p className="text-[10px] text-slate-400 uppercase font-bold tracking-tighter">Consultation</p>
             </div>
             <div className="w-px h-8 bg-slate-100 mx-4"></div>

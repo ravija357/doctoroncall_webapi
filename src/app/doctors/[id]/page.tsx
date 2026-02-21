@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/context/AuthContext";
-import { Loader2, ArrowLeft, Phone, Share2, Star, Clock, DollarSign, MapPin, MessageSquare } from "lucide-react";
+import { Loader2, ArrowLeft, Phone, Share2, Star, Clock, Banknote, MapPin, MessageSquare } from "lucide-react";
 import api from "@/services/api";
 import Link from "next/link";
 import { useSocket } from "@/context/SocketContext";
@@ -237,9 +237,9 @@ export default function DoctorDetailsPage() {
                     </div>
                     <div className="bg-slate-50 p-4 rounded-2xl text-center">
                         <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-2 text-green-600">
-                            <DollarSign className="w-5 h-5" />
+                            <Banknote className="w-5 h-5" />
                         </div>
-                        <p className="text-sm font-bold text-slate-700">${doctor.fees}</p>
+                        <p className="text-sm font-bold text-slate-700">Rs. {doctor.fees}</p>
                         <p className="text-xs text-slate-400">Consultation</p>
                     </div>
                 </div>

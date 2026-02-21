@@ -66,8 +66,12 @@ export default function DoctorDashboard() {
          
          // Calculate Stats
          const uniquePatients = new Set(appts.map(a => a.patient._id)).size;
-         const today = new Date().toISOString().split('T')[0];
-         const todayCount = appts.filter(a => a.date.startsWith(today)).length;
+         // Get today's local date string YYYY-MM-DD
+         const localTodayStr = new Date().toLocaleDateString('en-CA');
+         const todayCount = appts.filter(a => {
+             const apptDate = new Date(a.date);
+             return apptDate.toLocaleDateString('en-CA') === localTodayStr;
+         }).length;
          // Mock revenue calculation: appointments * fees
          const revenue = appts.filter(a => a.status === 'completed').length * (profile?.fees || 50);
 
@@ -110,6 +114,12 @@ export default function DoctorDashboard() {
 
     socket.on('doctor_rating_updated', handleRatingUpdate);
     socket.on('appointment_updated', handleAppointmentUpdate);
+    socket.on('schedule_updated', (data: { doctorId: string }) => {
+        if (doctorProfile && data.doctorId === doctorProfile._id) {
+            console.log("[Dashboard] Schedule updated globally, refreshing data...");
+            fetchData();
+        }
+    });
     socket.on('doctor_profile_updated', (data: { doctorId: string }) => {
         if (doctorProfile && data.doctorId === doctorProfile._id) {
             console.log("[Dashboard] Profile updated globally, refreshing stats...");
@@ -175,7 +185,7 @@ export default function DoctorDashboard() {
 
   return (
     <AuthGuard role="doctor">
-      <div className="min-h-screen bg-[#F8FAFC] pb-20 font-sans">
+      <div className="min-h-screen bg-slate-50 pb-20 font-sans selection:bg-emerald-100">
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
             {/* Quick Stats Grid */}
@@ -185,8 +195,8 @@ export default function DoctorDashboard() {
                         label="Total Patients" 
                         value={stats.totalPatients.toString()} 
                         trend="+12% this month"
-                        icon={<Users className="w-6 h-6 text-blue-600" />}
-                        bg="bg-blue-50"
+                        icon={<Users className="w-6 h-6 text-emerald-600" />}
+                        bg="bg-emerald-50"
                         trendColor="text-emerald-600"
                     />
                 </Link>
@@ -195,15 +205,15 @@ export default function DoctorDashboard() {
                         label="Appointments" 
                         value={stats.totalAppointments.toString()} 
                         trend="+5% this week"
-                        icon={<CalendarCheck className="w-6 h-6 text-purple-600" />}
-                        bg="bg-purple-50"
+                        icon={<CalendarCheck className="w-6 h-6 text-indigo-600" />}
+                        bg="bg-indigo-50"
                         trendColor="text-emerald-600"
                     />
                 </Link>
                 <Link href="/doctor/revenue">
                     <StatCard 
                         label="Total Revenue" 
-                        value={`$${stats.revenue.toLocaleString()}`} 
+                        value={`Rs. ${stats.revenue.toLocaleString()}`} 
                         trend="+18% vs last month"
                         icon={<TrendingUp className="w-6 h-6 text-emerald-600" />}
                         bg="bg-emerald-50"
@@ -230,8 +240,8 @@ export default function DoctorDashboard() {
                     <div className="bg-white rounded-[2rem] p-8 shadow-sm border border-slate-100">
                         <div className="flex items-center justify-between mb-8">
                             <div>
-                                <h2 className="text-2xl font-bold text-slate-800 font-serif">Today's Schedule</h2>
-                                <p className="text-slate-500 mt-1">{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</p>
+                                <h2 className="text-2xl font-black text-slate-900 tracking-tight">Today's Schedule</h2>
+                                <p className="text-slate-500 font-medium mt-1">{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</p>
                             </div>
                             <Link href="/schedule">
                                 <button className="flex items-center gap-2 text-sm font-bold text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 px-4 py-2 rounded-full transition-colors">
@@ -252,17 +262,21 @@ export default function DoctorDashboard() {
                         ) : (
                             <div className="space-y-4">
                                 {appointments
-                                    .filter(a => a.date.startsWith(new Date().toISOString().split('T')[0]))
+                                    .filter(a => {
+                                        const apptDate = new Date(a.date);
+                                        const localTodayStr = new Date().toLocaleDateString('en-CA');
+                                        return apptDate.toLocaleDateString('en-CA') === localTodayStr;
+                                    })
                                     .sort((a,b) => a.startTime.localeCompare(b.startTime))
                                     .map((appt) => (
-                                    <div key={appt._id} className="flex items-center p-4 rounded-2xl border border-slate-100 hover:shadow-md hover:border-emerald-100 transition-all duration-300 group bg-white">
-                                        <div className="w-16 flex-shrink-0 flex flex-col items-center justify-center border-r border-slate-100 pr-4 mr-4">
-                                            <span className="text-sm font-bold text-slate-800">{appt.startTime}</span>
-                                            <span className="text-xs text-slate-400 font-medium">{appt.endTime}</span>
+                                    <div key={appt._id} className="flex items-center p-5 rounded-3xl border border-slate-100 hover:shadow-xl hover:shadow-emerald-500/10 hover:border-emerald-200 transition-all duration-300 group bg-white relative overflow-hidden">
+                                        <div className="w-16 flex-shrink-0 flex flex-col items-center justify-center border-r border-slate-100 pr-5 mr-5">
+                                            <span className="text-sm font-black text-slate-900">{appt.startTime}</span>
+                                            <span className="text-xs text-slate-400 font-bold tracking-tighter">{appt.endTime}</span>
                                         </div>
                                         <div className="flex-1 flex items-center justify-between">
-                                            <div className="flex items-center gap-4">
-                                                <div className="w-12 h-12 rounded-full bg-slate-100 overflow-hidden">
+                                            <div className="flex items-center gap-5">
+                                                <div className="w-14 h-14 rounded-2xl bg-slate-100 overflow-hidden ring-4 ring-slate-50">
                                                     <img 
                                                         src={getImageUrl(appt.patient.image, appt.patient._id)} 
                                                         alt="Patient" 
@@ -270,11 +284,11 @@ export default function DoctorDashboard() {
                                                     />
                                                 </div>
                                                 <div>
-                                                    <h3 className="font-bold text-slate-800">{appt.patient.firstName} {appt.patient.lastName}</h3>
-                                                    <p className="text-sm text-slate-500 line-clamp-1">{appt.reason || 'Routine Checkup'}</p>
+                                                    <h3 className="font-bold text-slate-900 text-lg">{appt.patient.firstName} {appt.patient.lastName}</h3>
+                                                    <p className="text-sm text-slate-500 font-medium line-clamp-1">{appt.reason || 'Routine Checkup'}</p>
                                                 </div>
                                             </div>
-                                            <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
+                                            <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest ${
                                                 appt.status === 'confirmed' ? 'bg-emerald-100 text-emerald-700' : 
                                                 appt.status === 'pending' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-600'
                                             }`}>
@@ -290,7 +304,7 @@ export default function DoctorDashboard() {
                     {/* Recent Activity / Requests */}
                     <div className="bg-white rounded-[2rem] p-8 shadow-sm border border-slate-100">
                          <div className="flex items-center justify-between mb-6">
-                            <h2 className="text-xl font-bold text-slate-800 font-serif">Recent Requests</h2>
+                            <h2 className="text-xl font-black text-slate-900 tracking-tight">Recent Requests</h2>
                         </div>
                         <div className="overflow-x-auto">
                             <table className="w-full text-left">
@@ -307,10 +321,10 @@ export default function DoctorDashboard() {
                                         <tr key={appt._id} className="group hover:bg-slate-50 transition-colors">
                                             <td className="py-4 pl-2">
                                                 <div className="flex items-center gap-3">
-                                                    <div className="w-8 h-8 rounded-full bg-slate-200 overflow-hidden">
+                                                    <div className="w-10 h-10 rounded-xl bg-slate-200 overflow-hidden ring-2 ring-white">
                                                          <img src={getImageUrl(appt.patient.image, appt.patient._id)} className="w-full h-full object-cover" />
                                                     </div>
-                                                    <span className="font-bold text-slate-700">{appt.patient.firstName}</span>
+                                                    <span className="font-bold text-slate-900">{appt.patient.firstName}</span>
                                                 </div>
                                             </td>
                                             <td className="py-4 text-slate-600 font-medium">
@@ -374,53 +388,84 @@ export default function DoctorDashboard() {
                 {/* Sidebar: Profile & Actions */}
                 <div className="space-y-8">
                      {/* Mini Profile Card */}
-                     <div className="bg-gradient-to-br from-[#205072] to-[#329D9C] rounded-[2.5rem] p-8 text-white shadow-xl shadow-blue-200 relative overflow-hidden">
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mr-10 -mt-10"></div>
+                     <div className="bg-gradient-to-br from-slate-900 via-emerald-950 to-slate-900 rounded-[2.5rem] p-10 text-white shadow-2xl shadow-emerald-500/20 relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-500/20 rounded-full blur-[80px] -mr-20 -mt-20 group-hover:bg-emerald-500/30 transition-all duration-700"></div>
+                        <div className="absolute bottom-0 left-0 w-48 h-48 bg-indigo-500/10 rounded-full blur-[80px] -ml-20 -mb-20"></div>
+                        
                         <div className="relative z-10 flex flex-col items-center text-center">
-                             <div className="w-24 h-24 rounded-3xl bg-white/20 backdrop-blur-sm p-1 mb-4 relative group">
+                             <div className="w-28 h-28 rounded-[2rem] bg-white/10 backdrop-blur-md p-1.5 mb-6 relative group/img overflow-hidden ring-1 ring-white/20">
                                 <img 
                                     src={getImageUrl(user.image, user._id, user.updatedAt)} 
                                     alt="Profile" 
-                                    className="w-full h-full object-cover rounded-2xl" 
+                                    className="w-full h-full object-cover rounded-[1.7rem] transition-transform duration-700 group-hover/img:scale-110" 
                                 />
-                                <label className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-2xl opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity">
+                                <label className="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 group-hover/img:opacity-100 cursor-pointer transition-all duration-300 backdrop-blur-sm">
                                     <Pencil className="w-6 h-6 text-white" />
                                     <input type="file" className="hidden" onChange={(e) => {
                                         if (e.target.files?.[0]) handleImageUpdate(e.target.files[0]);
                                     }} />
                                 </label>
                              </div>
-                             <h3 className="text-xl font-bold mb-1">Dr. {user.firstName} {user.lastName}</h3>
-                             <p className="text-blue-100 text-sm font-medium mb-6">{doctorProfile?.specialization || 'General Practitioner'}</p>
+                             <h3 className="text-2xl font-black mb-1 tracking-tight">Dr. {user.firstName} {user.lastName}</h3>
+                             <p className="text-emerald-400 text-sm font-bold uppercase tracking-widest mb-8">{doctorProfile?.specialization || 'General Practitioner'}</p>
                              
                              <div className="grid grid-cols-2 gap-4 w-full">
-                                 <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 text-center">
-                                     <p className="text-2xl font-bold">{doctorProfile?.experience || 1}+</p>
-                                     <p className="text-[10px] uppercase font-bold text-blue-200 tracking-wider">Years Exp.</p>
+                                 <div className="bg-white/5 backdrop-blur-xl rounded-3xl p-4 text-center border border-white/10 hover:bg-white/10 transition-colors">
+                                     <p className="text-3xl font-black text-emerald-400">{doctorProfile?.experience || 1}+</p>
+                                     <p className="text-[10px] uppercase font-black text-slate-400 tracking-tighter">Years Exp.</p>
                                  </div>
-                                 <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 text-center">
-                                     <p className="text-2xl font-bold">{doctorProfile?.totalReviews || 0}</p>
-                                     <p className="text-[10px] uppercase font-bold text-blue-200 tracking-wider">Patients</p>
+                                 <div className="bg-white/5 backdrop-blur-xl rounded-3xl p-4 text-center border border-white/10 hover:bg-white/10 transition-colors">
+                                     <p className="text-3xl font-black text-indigo-400">{doctorProfile?.totalReviews || 0}</p>
+                                     <p className="text-[10px] uppercase font-black text-slate-400 tracking-tighter">Patients</p>
                                  </div>
                              </div>
-
-                             <Link href="/user/profile" className="w-full mt-6">
-                                <button className="w-full py-3 bg-white text-[#205072] font-bold rounded-xl shadow-lg hover:shadow-xl hover:bg-slate-50 transition-all">
+ 
+                             <Link href="/user/profile" className="w-full mt-8">
+                                <button className="w-full py-4 bg-emerald-500 hover:bg-emerald-400 text-white font-black rounded-2xl shadow-xl shadow-emerald-500/40 transition-all active:scale-95 uppercase tracking-widest text-xs">
                                     Edit Profile
                                 </button>
                              </Link>
                         </div>
                      </div>
 
-                     {/* Availability / Quick Actions */}
-                     <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-slate-100">
-                        <h3 className="text-lg font-bold text-slate-800 mb-4 font-serif">Quick Actions</h3>
-                        <div className="space-y-3">
-                            <ActionButton icon={<CalendarCheck className="w-5 h-5" />} label="Block Date" />
-                            <ActionButton icon={<Clock className="w-5 h-5" />} label="Edit Hours" href="/doctor/profile" />
-                            <ActionButton icon={<Settings className="w-5 h-5" />} label="Settings" />
-                        </div>
-                     </div>
+                      {/* Availability / Weekly Schedule */}
+                      <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-slate-100">
+                         <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-lg font-bold text-slate-800 font-serif">Weekly Schedule</h3>
+                            <Link href="/schedule">
+                                <button className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-full transition-colors">
+                                    <Pencil className="w-4 h-4" />
+                                </button>
+                            </Link>
+                         </div>
+                         <div className="space-y-3">
+                             {doctorProfile?.schedules && doctorProfile.schedules.length > 0 ? (
+                                 doctorProfile.schedules
+                                    .filter(s => !s.isOff)
+                                    .map((s, idx) => (
+                                     <div key={idx} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100">
+                                         <span className="text-sm font-bold text-slate-700">{s.day}</span>
+                                         <div className="flex items-center gap-2 text-xs font-medium text-slate-500">
+                                             <Clock className="w-3 h-3" />
+                                             <span>{s.startTime} - {s.endTime}</span>
+                                         </div>
+                                     </div>
+                                 ))
+                             ) : (
+                                 <p className="text-sm text-slate-500 text-center py-4 italic">No schedule set</p>
+                             )}
+                         </div>
+                      </div>
+
+                      {/* Quick Actions */}
+                      <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-slate-100">
+                         <h3 className="text-lg font-bold text-slate-800 mb-4 font-serif">Quick Actions</h3>
+                         <div className="space-y-3">
+                             <ActionButton icon={<CalendarCheck className="w-5 h-5" />} label="Block Date" />
+                             <ActionButton icon={<Clock className="w-5 h-5" />} label="Edit Hours" href="/schedule" />
+                             <ActionButton icon={<Settings className="w-5 h-5" />} label="Settings" />
+                         </div>
+                      </div>
                 </div>
             </div>
         </div>
@@ -443,8 +488,8 @@ function StatCard({ label, value, trend, icon, bg, trendColor }: any) {
                 )}
             </div>
             <div>
-                <p className="text-3xl font-bold text-slate-800 tracking-tight font-serif mb-1">{value}</p>
-                <p className="text-slate-500 font-medium text-sm">{label}</p>
+                <p className="text-3xl font-black text-slate-950 tracking-tight mb-1">{value}</p>
+                <p className="text-slate-400 font-black text-[10px] uppercase tracking-widest">{label}</p>
             </div>
         </div>
     );

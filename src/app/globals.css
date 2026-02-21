@@ -4,11 +4,25 @@
   --color-primary: #70c0fa;
   --color-primary-hover: #5bb3f5;
   --color-primary-light: #9ad4fc;
+  --color-accent-indigo: #6366f1;
+  --color-premium-dark: #0f172a;
 }
 
 @layer utilities {
   .clip-path-hero {
     clip-path: polygon(10% 0, 100% 0, 100% 100%, 0% 100%);
+  }
+
+  .glass-morphism {
+    @apply bg-white/40 backdrop-blur-xl border border-white/20 shadow-2xl;
+  }
+
+  .premium-shadow {
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
+  }
+
+  .premium-gradient {
+    @apply bg-gradient-to-br from-slate-900 to-slate-800;
   }
 }
 
@@ -28,6 +42,22 @@
 
 .animate-float {
   animation: float 3s ease-in-out infinite;
+}
+
+@keyframes bounce-slow {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+.animate-bounce-slow {
+  animation: bounce-slow 4s ease-in-out infinite;
 }
 
 body {

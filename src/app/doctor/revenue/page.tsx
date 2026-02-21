@@ -5,7 +5,7 @@ import { useAuth } from "@/context/AuthContext";
 import { appointmentService } from "@/services/appointment.service";
 import { doctorService } from "@/services/doctor.service";
 import { Appointment, Doctor } from "@/types";
-import { TrendingUp, DollarSign, Calendar, ArrowUpRight, ChevronLeft, Pencil } from "lucide-react";
+import { TrendingUp, Banknote, Calendar, ArrowUpRight, ChevronLeft, Pencil } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSocket } from "@/context/SocketContext";
@@ -147,10 +147,10 @@ export default function DoctorRevenuePage() {
                         <div className="absolute top-0 right-0 w-32 h-32 bg-white/20 rounded-full blur-2xl -mr-10 -mt-10"></div>
                         <div className="relative z-10 flex flex-col items-center text-center">
                             <div className="w-16 h-16 rounded-3xl bg-white/20 backdrop-blur-sm p-4 mb-4 flex items-center justify-center shadow-inner relative group">
-                                <DollarSign className="w-8 h-8 text-white group-hover:scale-110 transition-transform" />
+                                <Banknote className="w-8 h-8 text-white group-hover:scale-110 transition-transform" />
                             </div>
                             <p className="text-white/90 font-bold uppercase tracking-widest text-xs mb-2">Total Revenue</p>
-                            <h3 className="text-5xl font-black font-serif">${totalRevenue.toLocaleString()}</h3>
+                            <h3 className="text-5xl font-black font-serif">Rs. {totalRevenue.toLocaleString()}</h3>
                         </div>
                     </div>
 
@@ -159,7 +159,7 @@ export default function DoctorRevenuePage() {
                             <TrendingUp className="w-8 h-8 text-[#70c0fa]" />
                         </div>
                         <p className="text-slate-400 font-bold uppercase tracking-widest text-xs mb-2">This Month</p>
-                        <h3 className="text-4xl font-black text-slate-800 font-serif mb-3">${monthlyRevenue.toLocaleString()}</h3>
+                        <h3 className="text-4xl font-black text-slate-800 font-serif mb-3">Rs. {monthlyRevenue.toLocaleString()}</h3>
                         <div className="text-[10px] font-bold text-[#70c0fa] bg-blue-50 px-3 py-1.5 rounded-full uppercase tracking-wider">
                             Active Period
                         </div>
@@ -170,7 +170,7 @@ export default function DoctorRevenuePage() {
                             <Calendar className="w-8 h-8 text-[#70c0fa]" />
                         </div>
                         <p className="text-slate-400 font-bold uppercase tracking-widest text-xs mb-2">Consultation Fee</p>
-                        <h3 className="text-4xl font-black text-slate-800 font-serif mb-3">${fees}</h3>
+                        <h3 className="text-4xl font-black text-slate-800 font-serif mb-3">Rs. {fees}</h3>
                         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
                             <DialogTrigger asChild>
                                 <button className="absolute top-6 right-6 p-2 rounded-xl bg-slate-50 text-slate-400 hover:text-[#70c0fa] hover:bg-blue-50 transition-all opacity-0 group-hover:opacity-100">
@@ -186,7 +186,7 @@ export default function DoctorRevenuePage() {
                                 </DialogHeader>
                                 <div className="py-6">
                                     <div className="flex flex-col gap-2">
-                                        <label htmlFor="price" className="text-sm font-bold text-slate-600 ml-1">Fee Amount ($)</label>
+                                        <label htmlFor="price" className="text-sm font-bold text-slate-600 ml-1">Fee Amount (Rs.)</label>
                                         <Input
                                             id="price"
                                             type="number"
@@ -242,7 +242,7 @@ export default function DoctorRevenuePage() {
                                                 Consultation
                                             </td>
                                             <td className="py-4 text-right pr-4 border-b border-slate-50">
-                                                <span className="font-bold text-[#70c0fa]">+${fees}</span>
+                                                <span className="font-bold text-[#70c0fa]">+Rs. {fees}</span>
                                             </td>
                                         </tr>
                                     ))}
