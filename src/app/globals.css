@@ -64,5 +64,166 @@ body {
   margin: 0;
   padding: 0;
   color: #1e293b;
+  background-color: #ffffff;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* ── Professional Dark Mode Palette ──────────────── */
+.dark body {
+  color: #e2e8f0;
+  background-color: #030712;
+  /* Slate-950 */
+}
+
+.dark {
+  color-scheme: dark;
+}
+
+/* 1. Base levels of elevation */
+.dark .bg-white {
+  background-color: #0f172a !important;
+}
+
+/* Slate-900 */
+.dark .bg-\[#F8FAFD\],
+.dark .bg-\[\#F8FAFD\],
+.dark .bg-gray-50 {
+  background-color: #030712 !important;
+  /* Bottom-most level */
+}
+
+.dark .bg-slate-50 {
+  background-color: #0f172a !important;
+}
+
+.dark .bg-slate-50\/50 {
+  background-color: rgba(15, 23, 42, 0.4) !important;
+}
+
+/* 2. Professional Borders */
+.dark .border-slate-100,
+.dark .border-slate-200,
+.dark .border-gray-100,
+.dark .border-slate-50 {
+  border-color: #1e293b !important;
   /* Slate-800 */
+}
+
+.dark .border-primary\/15,
+.dark .border-primary\/20 {
+  border-color: rgba(112, 192, 250, 0.15) !important;
+}
+
+/* 3. Typography refinements */
+.dark .text-slate-900,
+.dark .text-gray-900 {
+  color: #f8fafc !important;
+}
+
+.dark .text-slate-800,
+.dark .text-gray-800 {
+  color: #f1f5f9 !important;
+}
+
+.dark .text-slate-700,
+.dark .text-gray-700 {
+  color: #e2e8f0 !important;
+}
+
+.dark .text-slate-600,
+.dark .text-gray-600 {
+  color: #94a3b8 !important;
+}
+
+.dark .text-slate-500,
+.dark .text-gray-500 {
+  color: #64748b !important;
+}
+
+.dark .text-slate-400,
+.dark .text-gray-400 {
+  color: #475569 !important;
+}
+
+/* 4. Unified Scrollbars */
+.dark ::-webkit-scrollbar {
+  width: 8px;
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: #030712;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #1e293b;
+  border-radius: 10px;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #334155;
+}
+
+/* 5. Navigation & UI Elements */
+.dark nav {
+  background-color: rgba(3, 7, 18, 0.8) !important;
+  border-color: #1e293b !important;
+  backdrop-filter: blur(12px) !important;
+}
+
+.dark .sticky,
+.dark .sticky-header {
+  background-color: #0f172a !important;
+}
+
+.dark input,
+.dark textarea,
+.dark select {
+  background-color: #020617 !important;
+  /* Darker than the container for depth */
+  color: #f8fafc !important;
+  border-color: #1e293b !important;
+}
+
+.dark input::placeholder {
+  color: #334155 !important;
+}
+
+.dark .glass-morphism {
+  background-color: rgba(15, 23, 42, 0.6) !important;
+  border-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+/* 6. Card depth consistency */
+.dark [class*="rounded-"][class*="bg-white"] {
+  background-color: #0f172a !important;
+  border: 1px solid #1e293b !important;
+}
+
+.dark .shadow-sm,
+.dark .shadow-md,
+.dark .shadow-lg,
+.dark .shadow-xl,
+.dark .shadow-2xl {
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* 7. Specific Component Overrides */
+.dark .bg-primary\/10 {
+  background-color: rgba(112, 192, 250, 0.08) !important;
+}
+
+.dark .bg-violet-50 {
+  background-color: rgba(139, 92, 246, 0.08) !important;
+}
+
+.dark .bg-emerald-50 {
+  background-color: rgba(16, 185, 129, 0.08) !important;
+}
+
+.dark .text-violet-500 {
+  color: #a78bfa !important;
+}
+
+.dark .text-emerald-600 {
+  color: #34d399 !important;
 }

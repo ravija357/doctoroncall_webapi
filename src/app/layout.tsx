@@ -16,6 +16,7 @@ export const metadata: Metadata = {
 import { Toaster } from "sonner";
 import { SocketProvider } from "@/context/SocketContext";
 import { NotificationProvider } from "@/context/NotificationContext";
+import { DarkModeProvider } from "@/context/DarkModeContext";
 
 export default function RootLayout({
   children,
@@ -29,12 +30,14 @@ export default function RootLayout({
             <RoleProvider>
                 <SocketProvider>
                     <NotificationProvider>
-                        <Navbar />
-                        <main className="min-h-screen bg-gray-50">
-                        {children}
-                        </main>
-                        <Footer />
-                        <Toaster richColors position="top-right" />
+                        <DarkModeProvider>
+                            <Navbar />
+                            <main className="min-h-screen bg-gray-50 dark:bg-slate-950 transition-colors duration-300">
+                            {children}
+                            </main>
+                            <Footer />
+                            <Toaster richColors position="top-right" />
+                        </DarkModeProvider>
                     </NotificationProvider>
                 </SocketProvider>
             </RoleProvider>

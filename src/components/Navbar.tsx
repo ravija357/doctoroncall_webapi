@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { useNotifications } from "@/context/NotificationContext";
 import { useRole } from "@/context/RoleContext";
@@ -291,15 +291,28 @@ export default function Navbar() {
 }
 
 function NavLink({ href, children, theme, badge }: { href: string, children: React.ReactNode, theme: any, badge?: number }) {
+  const pathname = usePathname();
+  const isActive = pathname === href || pathname.startsWith(href + '/');
+
   return (
-    <Link href={href} className={`text-sm font-bold text-gray-500 ${theme.hoverText} transition-colors relative group flex items-center gap-1`}>
+    <Link
+      href={href}
+      className={`text-sm font-bold transition-colors relative group flex items-center gap-1 ${
+        isActive ? 'text-primary' : `text-gray-500 ${theme.hoverText}`
+      }`}
+    >
       {children}
       {badge && badge > 0 ? (
           <span className="flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white ring-2 ring-white animate-pulse">
               {badge > 9 ? '9+' : badge}
           </span>
       ) : null}
-      <span className={`absolute -bottom-1 left-0 w-0 h-0.5 bg-current transition-all group-hover:w-full opacity-50`} />
+      {/* active indicator */}
+      <span
+        className={`absolute -bottom-1 left-0 h-0.5 bg-primary rounded-full transition-all duration-300 ${
+          isActive ? 'w-full opacity-100' : 'w-0 opacity-0 group-hover:w-full group-hover:opacity-50'
+        }`}
+      />
     </Link>
   );
 }

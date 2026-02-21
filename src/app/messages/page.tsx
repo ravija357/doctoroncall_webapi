@@ -81,28 +81,16 @@ function MessagesContent() {
         leaveCall();
     };
 
-    if (!user) return null; // Or loading state
+    if (!user) return null;
 
     return (
-        <div className="fixed inset-0 top-20 bg-gray-50 z-40">
-            <div className="container mx-auto max-w-7xl h-full pt-6 pb-6 relative">
-            
+        <>
             {/* 1. Incoming Call Modal */}
             {call && !callAccepted && (
-                <IncomingCallModal 
-                    call={{
-                        ...call,
-                        isCalling: false,
-                        callAccepted: false,
-                        callEnded: false,
-                    }} 
-                    onAnswer={() => {
-                        answerCall();
-                        setIsCalling(true);
-                    }} 
-                    onReject={() => {
-                        handleLeaveCall();
-                    }}
+                <IncomingCallModal
+                    call={{ ...call, isCalling: false, callAccepted: false, callEnded: false }}
+                    onAnswer={() => { answerCall(); setIsCalling(true); }}
+                    onReject={() => { handleLeaveCall(); }}
                 />
             )}
 
@@ -115,22 +103,24 @@ function MessagesContent() {
                 />
             )}
 
+            <div className="fixed inset-0 top-20 bg-[#F8FAFD] z-40">
+                <div className="container mx-auto max-w-7xl h-full pt-6 pb-6 relative px-4">
+
             {/* 3. Main Chat Interface */}
             <div className="h-full bg-white rounded-[2rem] shadow-xl overflow-hidden border border-slate-100 flex relative">
-                
                 {/* Sidebar */}
-                <ContactList 
+                <ContactList
                     contacts={contacts}
                     activeContact={activeContact}
                     onSelectContact={setActiveContact}
                     searchQuery={searchQuery}
                     onSearchChange={setSearchQuery}
-                    isOpen={!activeContact} // On mobile, show list if no contact selected
+                    isOpen={!activeContact}
                 />
 
                 {/* Chat Area */}
                 {activeContact ? (
-                    <ChatWindow 
+                    <ChatWindow
                         contact={activeContact}
                         onClose={() => setActiveContact(null)}
                         onCallStart={(type) => handleStartCall(type === 'video')}
@@ -141,19 +131,20 @@ function MessagesContent() {
                         isLoadingMessages={isLoadingMessages}
                     />
                 ) : (
-                     <div className="hidden md:flex flex-1 flex-col items-center justify-center text-center p-8 bg-slate-50/50">
-                        <div className="w-24 h-24 bg-blue-50 rounded-full flex items-center justify-center mb-6 text-blue-200">
-                            <Send className="w-10 h-10" />
+                    <div className="hidden md:flex flex-1 flex-col items-center justify-center text-center p-8 bg-[#F8FAFD]">
+                        <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mb-5">
+                            <Send className="w-9 h-9 text-primary" />
                         </div>
-                        <h2 className="text-2xl font-bold text-slate-800 mb-2">Your Messages</h2>
-                        <p className="text-slate-500 max-w-sm">
-                            Select a {user.role === 'doctor' ? 'patient' : 'doctor'} from the list to start a chat.
+                        <h2 className="text-xl font-black text-slate-800 mb-2">Your Conversations</h2>
+                        <p className="text-slate-400 text-sm max-w-xs">
+                            Select a {user.role === 'doctor' ? 'patient' : 'doctor'} from the list on the left to start chatting.
                         </p>
                     </div>
                 )}
             </div>
+                </div>
             </div>
-        </div>
+        </>
     );
 }
 

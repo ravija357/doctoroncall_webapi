@@ -31,5 +31,15 @@ export const doctorService = {
     updateProfile: async (data: Partial<Doctor>) => {
         const res = await api.put<{ success: boolean; data: Doctor }>('/doctors/profile', data);
         return res.data.data;
+    },
+
+    getPublicStats: async () => {
+        const res = await api.get<{ success: boolean; data: Doctor[] }>('/doctors');
+        const doctors = res.data.data || [];
+        const count = doctors.length;
+        const avgRating = count > 0
+            ? doctors.reduce((sum, d) => sum + (d.averageRating || 0), 0) / count
+            : 0;
+        return { count, avgRating: parseFloat(avgRating.toFixed(1)) };
     }
 };

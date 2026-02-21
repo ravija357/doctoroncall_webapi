@@ -14,7 +14,7 @@ export function JitsiCallModal({ roomName, displayName, onClose }: JitsiCallModa
     const [loading, setLoading] = useState(true);
 
     return (
-        <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center">
+        <div className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center">
             <div className="relative w-full h-full max-w-6xl max-h-[90vh] bg-black rounded-xl overflow-hidden shadow-2xl flex flex-col">
                 
                 {/* Header / Controls overlay could go here if needed, but Jitsi has its own */}

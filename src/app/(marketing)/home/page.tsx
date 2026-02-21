@@ -7,16 +7,15 @@ import {
   Calendar,
   ShieldCheck,
   Star,
-  Activity,
   Heart,
   Brain,
   Baby,
-  Stethoscope,
   Microscope,
   Award,
   HeartPulse,
   CheckCircle2,
   Zap,
+  Video,
 } from "lucide-react";
 import {
   motion,
@@ -28,18 +27,24 @@ import {
 } from "framer-motion";
 import { useRef, useEffect, useState } from "react";
 import Hero3D from "./components/Hero3D";
+import { doctorService } from "@/services/doctor.service";
+import { appointmentService } from "@/services/appointment.service";
+import { useAuth } from "@/context/AuthContext";
+import { Doctor, Appointment } from "@/types";
+import { getImageUrl } from "@/utils/imageHelper";
 
 /* ─────────────────────────────────────────────
    Shared variants
 ───────────────────────────────────────────── */
-const ease = [0.22, 1, 0.36, 1] as const;
+const ease = [0.16, 1, 0.3, 1] as const; // softer expo-out
 
 const fadeUp = {
-  hidden: { opacity: 0, y: 40 },
+  hidden: { opacity: 0, y: 24, filter: "blur(4px)" },
   visible: (delay = 0) => ({
     opacity: 1,
     y: 0,
-    transition: { duration: 0.8, ease, delay },
+    filter: "blur(0px)",
+    transition: { duration: 1.0, ease, delay },
   }),
 };
 
@@ -47,34 +52,34 @@ const fadeIn = {
   hidden: { opacity: 0 },
   visible: (delay = 0) => ({
     opacity: 1,
-    transition: { duration: 0.6, ease, delay },
+    transition: { duration: 0.9, ease, delay },
   }),
 };
 
 const scaleIn = {
-  hidden: { opacity: 0, scale: 0.85 },
+  hidden: { opacity: 0, scale: 0.9 },
   visible: (delay = 0) => ({
     opacity: 1,
     scale: 1,
-    transition: { duration: 0.7, ease, delay },
+    transition: { duration: 0.9, ease, delay },
   }),
 };
 
 const stagger = {
   hidden: {},
-  visible: { transition: { staggerChildren: 0.1 } },
+  visible: { transition: { staggerChildren: 0.13, delayChildren: 0.05 } },
 };
 
 /* ─────────────────────────────────────────────
    Animated counter hook
 ───────────────────────────────────────────── */
-function useCounter(target: number, duration = 1.6, start = false) {
+function useCounter(target: number, duration = 2.2, start = false) {
   const [value, setValue] = useState(0);
   useEffect(() => {
     if (!start) return;
     const controls = animate(0, target, {
       duration,
-      ease: "easeOut",
+      ease: [0.16, 1, 0.3, 1],
       onUpdate: (v) => setValue(Math.round(v)),
     });
     return controls.stop;
@@ -93,15 +98,15 @@ function MagneticCard({
   className?: string;
 }) {
   const ref = useRef<HTMLDivElement>(null);
-  const x = useSpring(0, { stiffness: 200, damping: 20 });
-  const y = useSpring(0, { stiffness: 200, damping: 20 });
+  const x = useSpring(0, { stiffness: 100, damping: 28, mass: 0.6 });
+  const y = useSpring(0, { stiffness: 100, damping: 28, mass: 0.6 });
 
   const onMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = ref.current!.getBoundingClientRect();
     const cx = rect.left + rect.width / 2;
     const cy = rect.top + rect.height / 2;
-    x.set((e.clientX - cx) * 0.08);
-    y.set((e.clientY - cy) * 0.08);
+    x.set((e.clientX - cx) * 0.06);
+    y.set((e.clientY - cy) * 0.06);
   };
 
   const onMouseLeave = () => {
@@ -136,11 +141,11 @@ function AnimatedOrb({
     <motion.div
       className={className}
       animate={{
-        scale: [1, 1.15, 1],
-        opacity: [0.4, 0.7, 0.4],
+        scale: [1, 1.08, 1],
+        opacity: [0.3, 0.55, 0.3],
       }}
       transition={{
-        duration: 6,
+        duration: 9,
         repeat: Infinity,
         ease: "easeInOut",
         delay,
@@ -318,14 +323,60 @@ function OrbitBadge({
    Main Page
 ───────────────────────────────────────────── */
 export default function HomePage() {
+  const { user } = useAuth();
   const heroRef = useRef<HTMLDivElement>(null);
   const statsRef = useRef<HTMLDivElement>(null);
 
+  // ── Real-time state ──────────────────────────
+  const [statsData, setStatsData] = useState<{ count: number; avgRating: number } | null>(null);
+  const [nextAppointment, setNextAppointment] = useState<Appointment | null>(null);
+  const [featuredDoctor, setFeaturedDoctor] = useState<Doctor | null>(null);
+  const [cardLoading, setCardLoading] = useState(true);
+
+  // Fetch public stats (no auth needed)
+  useEffect(() => {
+    doctorService.getPublicStats()
+      .then(setStatsData)
+      .catch(() => setStatsData({ count: 500, avgRating: 4.9 }));
+  }, []);
+
+  // Fetch appointment / featured doctor
+  useEffect(() => {
+    const load = async () => {
+      setCardLoading(true);
+      try {
+        if (user && user.role === 'user') {
+          // Logged-in patient: find next confirmed upcoming appointment
+          const appts = await appointmentService.getMyAppointments();
+          const now = new Date();
+          const upcoming = appts
+            .filter(a => a.status === 'confirmed' && new Date(a.date) >= now)
+            .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0] || null;
+          setNextAppointment(upcoming);
+          if (!upcoming) {
+            // Fallback: show a featured real doctor
+            const doctors = await doctorService.getAllDoctors();
+            setFeaturedDoctor(doctors[0] || null);
+          }
+        } else {
+          // Guest or doctor: show a featured real doctor
+          const doctors = await doctorService.getAllDoctors();
+          setFeaturedDoctor(doctors[0] || null);
+        }
+      } catch {
+        // Silent fallback – card will show default UI
+      } finally {
+        setCardLoading(false);
+      }
+    };
+    load();
+  }, [user]);
+
+  // ── Scroll effects ───────────────────────────
   const { scrollYProgress } = useScroll({
     target: heroRef,
     offset: ["start start", "end start"],
   });
-
   const heroY = useTransform(scrollYProgress, [0, 1], [0, 160]);
   const heroOpacity = useTransform(scrollYProgress, [0, 0.6], [1, 0]);
   const heroScale = useTransform(scrollYProgress, [0, 0.6], [1, 0.92]);
@@ -523,9 +574,15 @@ export default function HomePage() {
             transition={{ duration: 0.9, ease }}
           >
             <div className="relative z-10 grid grid-cols-2 md:grid-cols-4 gap-12 text-center">
-              <StatItem count="500+" label="Verified Doctors" />
+              <StatItem
+                count={statsData ? `${statsData.count}+` : "..."}
+                label="Verified Doctors"
+              />
               <StatItem count="100k+" label="Happy Patients" />
-              <StatItem count="4.9/5" label="Average Rating" />
+              <StatItem
+                count={statsData ? `${statsData.avgRating}/5` : "..."}
+                label="Average Rating"
+              />
               <StatItem count="24/7" label="Support" />
             </div>
           </motion.div>
@@ -626,7 +683,8 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Floating UI mockup */}
+            {/* Floating UI mockup — hidden for doctors */}
+            {user?.role !== 'doctor' && (
             <motion.div
               className="flex-1 relative"
               initial={{ opacity: 0, x: 60 }}
@@ -643,10 +701,14 @@ export default function HomePage() {
                 <div className="flex items-center justify-between mb-8">
                   <div>
                     <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">
-                      Upcoming
+                      {nextAppointment ? "Upcoming" : "Featured Doctor"}
                     </p>
                     <h4 className="text-xl font-bold text-slate-800">
-                      General Checkup
+                      {nextAppointment
+                        ? (nextAppointment.reason || "Appointment")
+                        : featuredDoctor
+                        ? featuredDoctor.specialization
+                        : "Your Health, Simplified"}
                     </h4>
                   </div>
                   <motion.div
@@ -658,59 +720,110 @@ export default function HomePage() {
                   </motion.div>
                 </div>
 
-                {/* Doctor info */}
-                <div className="flex items-center gap-4 mb-8">
-                  <motion.div
-                    className="w-14 h-14 rounded-full bg-primary/20"
-                    animate={{ scale: [1, 1.05, 1] }}
-                    transition={{ duration: 2.5, repeat: Infinity }}
-                  />
-                  <div>
-                    <p className="font-bold text-slate-900">Dr. Emily Chen</p>
-                    <p className="text-sm text-slate-500">Tomorrow, 10:00 AM</p>
+                {/* Doctor info — skeleton or real */}
+                {cardLoading ? (
+                  <div className="flex items-center gap-4 mb-8 animate-pulse">
+                    <div className="w-14 h-14 rounded-full bg-slate-100 flex-shrink-0" />
+                    <div className="space-y-2 flex-1">
+                      <div className="h-4 w-32 bg-slate-100 rounded-full" />
+                      <div className="h-3 w-24 bg-slate-100 rounded-full" />
+                    </div>
                   </div>
-                  <motion.div
-                    className="ml-auto flex items-center gap-1 text-amber-500"
-                    initial={{ opacity: 0, scale: 0 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.8, type: "spring" }}
-                  >
-                    <Star className="w-4 h-4 fill-amber-400" />
-                    <span className="text-sm font-bold">4.9</span>
-                  </motion.div>
-                </div>
+                ) : (
+                  <div className="flex items-center gap-4 mb-8">
+                    <motion.div
+                      className="w-14 h-14 rounded-full bg-primary/20 overflow-hidden flex-shrink-0"
+                      animate={{ scale: [1, 1.05, 1] }}
+                      transition={{ duration: 2.5, repeat: Infinity }}
+                    >
+                      {(nextAppointment?.doctor?.user?.image || featuredDoctor?.user?.image) && (
+                        <img
+                          src={getImageUrl(
+                            nextAppointment?.doctor?.user?.image ?? featuredDoctor?.user?.image,
+                            nextAppointment?.doctor?.user?._id ?? featuredDoctor?.user?._id
+                          )}
+                          alt="Doctor"
+                          className="w-full h-full object-cover"
+                        />
+                      )}
+                    </motion.div>
+                    <div>
+                      <p className="font-bold text-slate-900">
+                        {nextAppointment
+                          ? `Dr. ${nextAppointment.doctor?.user?.firstName ?? ""} ${nextAppointment.doctor?.user?.lastName ?? ""}`.trim()
+                          : featuredDoctor
+                          ? `Dr. ${featuredDoctor.user?.firstName ?? ""} ${featuredDoctor.user?.lastName ?? ""}`.trim()
+                          : "Find a Doctor"}
+                      </p>
+                      <p className="text-sm text-slate-500">
+                        {nextAppointment
+                          ? `${new Date(nextAppointment.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}, ${nextAppointment.startTime}`
+                          : featuredDoctor
+                          ? featuredDoctor.specialization
+                          : "Book your first appointment"}
+                      </p>
+                    </div>
+                    <motion.div
+                      className="ml-auto flex items-center gap-1 text-amber-500"
+                      initial={{ opacity: 0, scale: 0 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 0.8, type: "spring" }}
+                    >
+                      <Star className="w-4 h-4 fill-amber-400" />
+                      <span className="text-sm font-bold">
+                        {(nextAppointment?.doctor?.averageRating ?? featuredDoctor?.averageRating)?.toFixed(1) ?? "New"}
+                      </span>
+                    </motion.div>
+                  </div>
+                )}
 
                 {/* CTA button */}
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.97 }}
-                  className="w-full h-12 rounded-xl bg-primary text-white font-bold shadow-lg shadow-primary/30 transition-colors relative overflow-hidden"
-                >
-                  <motion.span
-                    className="absolute inset-0 bg-primary-hover"
-                    initial={{ scaleX: 0, originX: 0 }}
-                    whileHover={{ scaleX: 1 }}
-                    transition={{ duration: 0.3 }}
-                  />
-                  <span className="relative z-10">Start Video Call</span>
-                </motion.button>
+                <Link href={nextAppointment ? "/messages" : "/doctors"}>
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.97 }}
+                    className="w-full h-12 rounded-xl bg-primary text-white font-bold shadow-lg shadow-primary/30 transition-colors relative overflow-hidden"
+                  >
+                    <motion.span
+                      className="absolute inset-0 bg-primary-hover"
+                      initial={{ scaleX: 0, originX: 0 }}
+                      whileHover={{ scaleX: 1 }}
+                      transition={{ duration: 0.3 }}
+                    />
+                    <span className="relative z-10 flex items-center justify-center gap-2">
+                      {nextAppointment ? (
+                        <><Video className="w-4 h-4" /> Start Video Call</>
+                      ) : (
+                        <><ArrowRight className="w-4 h-4" /> Book Appointment</>
+                      )}
+                    </span>
+                  </motion.button>
+                </Link>
 
                 {/* Status chips */}
                 <motion.div
-                  className="flex gap-2 mt-4"
+                  className="flex gap-2 mt-4 flex-wrap"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 1.2 }}
                 >
-                  {["Confirmed", "Insured", "HD Video"].map((chip) => (
-                    <span
-                      key={chip}
-                      className="flex items-center gap-1 px-2 py-1 rounded-full bg-emerald-50 text-emerald-600 text-xs font-semibold"
-                    >
-                      <CheckCircle2 className="w-3 h-3" />
-                      {chip}
-                    </span>
-                  ))}
+                  {nextAppointment ? (
+                    ["Confirmed", "HD Video", "Insured"].map((chip) => (
+                      <span key={chip} className="flex items-center gap-1 px-2 py-1 rounded-full bg-sky-50 text-sky-600 text-xs font-semibold">
+                        <CheckCircle2 className="w-3 h-3" />{chip}
+                      </span>
+                    ))
+                  ) : featuredDoctor ? (
+                    [
+                      featuredDoctor.isVerified ? "Verified" : null,
+                      `${featuredDoctor.experience}yr Exp`,
+                      `Rs. ${featuredDoctor.fees}`,
+                    ].filter(Boolean).map((chip) => (
+                      <span key={chip!} className="flex items-center gap-1 px-2 py-1 rounded-full bg-sky-50 text-sky-600 text-xs font-semibold">
+                        <CheckCircle2 className="w-3 h-3" />{chip}
+                      </span>
+                    ))
+                  ) : null}
                 </motion.div>
               </motion.div>
 
@@ -752,6 +865,7 @@ export default function HomePage() {
                 <span className="text-sm font-bold text-slate-800">Instant Booking</span>
               </motion.div>
             </motion.div>
+            )}
           </div>
         </div>
       </section>
