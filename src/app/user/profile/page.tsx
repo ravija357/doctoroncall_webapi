@@ -205,6 +205,7 @@ export default function UserProfilePage() {
     data.append("phone", formData.phone);
     data.append("bio", formData.bio);
     data.append("address", formData.address);
+    data.append("preferences", JSON.stringify(preferences));
 
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";

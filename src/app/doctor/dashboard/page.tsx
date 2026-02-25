@@ -178,11 +178,11 @@ export default function DoctorDashboard() {
       if (profile) setDoctorProfile(profile);
       if (appts) {
         setAppointments(appts);
-        const uniquePatients = new Set(appts.map((a) => a.patient._id)).size;
+        const uniquePatients = profile?.totalPatients || new Set(appts.map((a) => a.patient._id)).size;
         const localTodayStr = new Date().toLocaleDateString("en-CA");
         const todayCount = appts.filter((a) => new Date(a.date).toLocaleDateString("en-CA") === localTodayStr).length;
-        const revenue = appts.filter((a) => a.status === "completed").length * (profile?.fees || 0);
-        setStats({ totalPatients: uniquePatients, totalAppointments: appts.length, todayAppointments: todayCount, revenue });
+        const revenue = profile?.totalRevenue || appts.filter((a) => a.status === "completed").length * (profile?.fees || 0);
+        setStats({ totalPatients: uniquePatients, totalAppointments: profile?.totalVisits || appts.length, todayAppointments: todayCount, revenue });
       }
     } catch (e) {
       console.error("Dashboard fetch failed", e);
