@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { useSocket } from "@/context/SocketContext";
 import { doctorService } from "@/services/doctor.service";
 import { Schedule, Doctor } from "@/types";
 import { Clock, Save, Plus, X, Moon, Sun, CalendarDays, CheckCircle2 } from "lucide-react";
@@ -145,6 +146,7 @@ export default function SchedulePage() {
   const [doctor, setDoctor] = useState<Doctor | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const { socket } = useSocket();
   const [saved, setSaved] = useState(false);
   const [schedules, setSchedules] = useState<Partial<Schedule>[]>([]);
 
@@ -171,7 +173,19 @@ export default function SchedulePage() {
     };
 
     if (isAuthenticated && user?.role === "doctor") fetchProfile();
-  }, [isAuthenticated, authLoading, user]);
+
+    if (!socket) return;
+    const handleSync = () => {
+      console.log("[SOCKET] Schedule sync received");
+      fetchProfile();
+    };
+    socket.on('schedule_sync', handleSync);
+    socket.on('profile_sync', handleSync);
+    return () => {
+      socket.off('schedule_sync', handleSync);
+      socket.off('profile_sync', handleSync);
+    };
+  }, [isAuthenticated, authLoading, user, socket]);
 
   const handleScheduleChange = (index: number, field: keyof Schedule, value: any) => {
     const next = [...schedules];

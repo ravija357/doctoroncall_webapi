@@ -164,7 +164,7 @@ export default function DoctorDashboard() {
   const { user, refreshUser } = useAuth();
   const [doctorProfile, setDoctorProfile] = useState<Doctor | null>(null);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
-  const [stats, setStats] = useState({ totalPatients: 0, totalAppointments: 0, todayAppointments: 0, revenue: 0 });
+  const [stats, setStats] = useState({ totalPatients: 0, totalAppointments: 0, todayAppointments: 0, revenue: 0, pendingRequests: 0 });
   const [loading, setLoading] = useState(true);
   const [isUpdatingImage, setIsUpdatingImage] = useState(false);
   const { socket } = useSocket();
@@ -178,11 +178,18 @@ export default function DoctorDashboard() {
       if (profile) setDoctorProfile(profile);
       if (appts) {
         setAppointments(appts);
-        const uniquePatients = profile?.totalPatients || new Set(appts.map((a) => a.patient._id)).size;
+        const uniquePatients = new Set(appts.map((a) => a.patient._id)).size;
         const localTodayStr = new Date().toLocaleDateString("en-CA");
         const todayCount = appts.filter((a) => new Date(a.date).toLocaleDateString("en-CA") === localTodayStr).length;
-        const revenue = profile?.totalRevenue || appts.filter((a) => a.status === "completed").length * (profile?.fees || 0);
-        setStats({ totalPatients: uniquePatients, totalAppointments: profile?.totalVisits || appts.length, todayAppointments: todayCount, revenue });
+        const revenue = appts.filter((a) => a.status === "completed" || a.status === "confirmed").length * (profile?.fees || 0);
+        const pendingRequests = appts.filter((a) => a.status === 'pending').length;
+        setStats({ 
+            totalPatients: uniquePatients, 
+            totalAppointments: appts.length, 
+            todayAppointments: todayCount, 
+            revenue,
+            pendingRequests 
+        });
       }
     } catch (e) {
       console.error("Dashboard fetch failed", e);
@@ -287,9 +294,10 @@ export default function DoctorDashboard() {
             variants={stagger}
           >
             <StatCard
-              label="Total Patients" value={stats.totalPatients.toString()}
-              trend="+12% month" icon={<Users className="w-5 h-5 text-primary" />}
-              accent="bg-primary/10" href="/my-patients"
+              label="Pending Requests" value={stats.pendingRequests.toString()}
+              trend={stats.pendingRequests > 0 ? "Requires Action" : "All set"} 
+              icon={<Users className="w-5 h-5 text-orange-500" />}
+              accent="bg-orange-50" href="/doctor/appointments"
             />
             <StatCard
               label="Appointments" value={stats.totalAppointments.toString()}

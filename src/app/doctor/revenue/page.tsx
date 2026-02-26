@@ -81,28 +81,26 @@ export default function DoctorRevenuePage() {
 
     // Connect socket listener for real-time revenue updates
     useEffect(() => {
-        if (!socket || !doctorProfile) return;
+        if (!socket) return;
 
-        const handleAppointmentUpdate = (data: { doctorId: string }) => {
-            if (data.doctorId === doctorProfile._id) {
-                console.log("[Revenue] Appointment updated globally, fetching new revenue data...");
-                fetchData();
-            }
+        const handleSync = () => {
+            console.log("[Revenue] Global update sync received, refreshing...");
+            fetchData();
         };
 
-        socket.on('appointment_updated', handleAppointmentUpdate);
-        socket.on('doctor_profile_updated', (data: { doctorId: string }) => {
-            if (doctorProfile && data.doctorId === doctorProfile._id) {
-                console.log("[Revenue] Profile updated globally, refreshing...");
-                fetchData();
-            }
-        });
+        // Fallback/Legacy global events
+        socket.on('appointment_updated', handleSync);
+        socket.on('doctor_profile_updated', handleSync);
+        socket.on('appointment_sync', handleSync);
+        socket.on('profile_sync', handleSync); // Add profile_sync for device parity
 
         return () => {
-            socket.off('appointment_updated', handleAppointmentUpdate);
-            socket.off('doctor_profile_updated');
+            socket.off('appointment_updated', handleSync);
+            socket.off('doctor_profile_updated', handleSync);
+            socket.off('appointment_sync', handleSync);
+            socket.off('profile_sync', handleSync);
         };
-    }, [socket, doctorProfile]);
+    }, [socket]);
 
     if (authLoading || loading) {
         return (
@@ -112,8 +110,8 @@ export default function DoctorRevenuePage() {
         );
     }
 
-    // Calculate detailed stats
-    const completedAppointments = appointments.filter(a => a.status === 'completed');
+    // Calculate detailed stats (including confirmed for revenue projection/active revenue)
+    const completedAppointments = appointments.filter(a => a.status === 'completed' || a.status === 'confirmed');
     const today = new Date();
     const currentMonth = today.getMonth();
     const currentYear = today.getFullYear();
