@@ -34,31 +34,32 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const { socket } = useSocket();
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [appts, docs] = await Promise.all([
-           appointmentService.getMyAppointments().catch(() => []),
-           doctorService.getAllDoctors().catch(() => [])
-        ]);
+  const fetchData = async () => {
+    try {
+      const [appts, docs] = await Promise.all([
+         appointmentService.getMyAppointments().catch(() => []),
+         doctorService.getAllDoctors().catch(() => [])
+      ]);
 
-        if (appts) {
-            const upcoming = appts
-                .filter(a => new Date(a.date) >= new Date() && a.status === 'confirmed')
-                .sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
-            setNextAppointment(upcoming || null);
-        }
-
-        if (docs) {
-            const top = docs.sort((a,b) => b.averageRating - a.averageRating).slice(0, 4);
-            setTopDoctors(top);
-        }
-      } catch (e) {
-        console.error("Dashboard fetch error", e);
-      } finally {
-        setLoading(false);
+      if (appts) {
+          const upcoming = appts
+              .filter(a => new Date(a.date) >= new Date() && a.status === 'confirmed')
+              .sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
+          setNextAppointment(upcoming || null);
       }
-    };
+
+      if (docs) {
+          const top = docs.sort((a,b) => b.averageRating - a.averageRating).slice(0, 4);
+          setTopDoctors(top);
+      }
+    } catch (e) {
+      console.error("Dashboard fetch error", e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     if (user) fetchData();
   }, [user]);
 
@@ -75,9 +76,21 @@ export default function DashboardPage() {
         );
     };
 
+    const handleSync = () => {
+        console.log('[SOCKET] Activity Sync Received');
+        fetchData();
+    };
+
     socket.on('doctor_rating_updated', handleRatingUpdate);
+    socket.on('appointment_sync', handleSync);
+    socket.on('schedule_sync', handleSync);
+    socket.on('profile_sync', handleSync);
+
     return () => {
         socket.off('doctor_rating_updated', handleRatingUpdate);
+        socket.off('appointment_sync', handleSync);
+        socket.off('schedule_sync', handleSync);
+        socket.off('profile_sync', handleSync);
     };
   }, [socket]);
 

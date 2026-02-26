@@ -69,19 +69,44 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     const handleNewNotification = (notification: INotification) => {
       setNotifications(prev => [notification, ...prev]);
       setUnreadCount(prev => prev + 1);
-      toast.info(notification.message);
+      
+      // Skip the generic toast if it's a message, because handleNewMessage will show a better one
+      if (notification.type as any !== 'message') {
+        toast.info(notification.message);
+      }
     };
 
-    const handleNewMessage = () => {
+    const handleNewMessage = (message: any) => {
         setUnreadMessageCount(prev => prev + 1);
+        
+        // Show a popup if the user is not currently in this specific chat
+        const currentPath = window.location.pathname;
+        const chatPath = `/chat/${message.sender}`;
+        
+        if (currentPath !== chatPath) {
+            toast.success(`Message from ${message.senderName || 'Doctor'}`, {
+                description: message.content.length > 50 ? message.content.substring(0, 50) + '...' : message.content,
+                action: {
+                    label: 'Reply',
+                    onClick: () => window.location.href = chatPath
+                }
+            });
+        }
+    }
+
+    const handleSync = () => {
+        console.log('[SOCKET] Notification Sync Ping');
+        fetchNotifications();
     }
 
     socket.on('receive_notification', handleNewNotification);
     socket.on('receive_message', handleNewMessage);
+    socket.on('notification_sync', handleSync);
 
     return () => {
       socket.off('receive_notification', handleNewNotification);
       socket.off('receive_message', handleNewMessage);
+      socket.off('notification_sync', handleSync);
     };
   }, [socket]);
 

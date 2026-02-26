@@ -197,16 +197,30 @@ export default function DoctorDashboard() {
     if (!socket) return;
     const handleRating = (d: { doctorId: string; averageRating: number; totalReviews: number }) =>
       setDoctorProfile((p) => p && p._id === d.doctorId ? { ...p, averageRating: d.averageRating, totalReviews: d.totalReviews } : p);
-    const handleAppt = (d: { doctorId: string }) => { if (doctorProfile?._id === d.doctorId) fetchData(); };
+    
+    const handleSync = () => {
+        console.log('[SOCKET] Activity Sync Received');
+        fetchData();
+    };
+
     socket.on("doctor_rating_updated", handleRating);
-    socket.on("appointment_updated", handleAppt);
-    socket.on("schedule_updated", handleAppt);
-    socket.on("doctor_profile_updated", handleAppt);
+    socket.on("appointment_sync", handleSync);
+    socket.on("schedule_sync", handleSync);
+    socket.on("profile_sync", handleSync);
+    
+    // Fallback/Legacy global events
+    socket.on("appointment_updated", handleSync);
+    socket.on("schedule_updated", handleSync);
+    socket.on("doctor_profile_updated", handleSync);
+
     return () => {
       socket.off("doctor_rating_updated", handleRating);
-      socket.off("appointment_updated", handleAppt);
-      socket.off("schedule_updated");
-      socket.off("doctor_profile_updated");
+      socket.off("appointment_sync", handleSync);
+      socket.off("schedule_sync", handleSync);
+      socket.off("profile_sync", handleSync);
+      socket.off("appointment_updated", handleSync);
+      socket.off("schedule_updated", handleSync);
+      socket.off("doctor_profile_updated", handleSync);
     };
   }, [socket, doctorProfile]);
 

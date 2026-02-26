@@ -9,6 +9,7 @@ import {
   Search, ChevronRight, Users, Clock, CheckCircle2, X,
 } from "lucide-react";
 import { getImageUrl } from "@/utils/imageHelper";
+import Link from "next/link";
 import {
   Dialog, DialogContent, DialogHeader,
   DialogTitle, DialogDescription,
@@ -257,16 +258,27 @@ export default function MyPatientsPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
 
         {/* ── Header ── */}
-        <motion.div className="mb-10" initial="hidden" animate="visible" variants={stagger}>
-          <motion.p variants={fadeUp} className="text-xs font-bold text-primary uppercase tracking-widest mb-1">
-            Doctor Portal
-          </motion.p>
-          <motion.h1 variants={fadeUp} custom={0.05} className="text-3xl font-black text-slate-900 tracking-tight">
-            My Patients
-          </motion.h1>
-          <motion.p variants={fadeUp} custom={0.1} className="text-slate-400 mt-1 text-sm">
-            View and manage your full patient roster.
-          </motion.p>
+        <motion.div className="mb-10 flex items-center justify-between" initial="hidden" animate="visible" variants={stagger}>
+          <div>
+            <motion.p variants={fadeUp} className="text-xs font-bold text-primary uppercase tracking-widest mb-1">
+              Doctor Portal
+            </motion.p>
+            <motion.h1 variants={fadeUp} custom={0.05} className="text-3xl font-black text-slate-900 tracking-tight">
+              My Patients
+            </motion.h1>
+            <motion.p variants={fadeUp} custom={0.1} className="text-slate-400 mt-1 text-sm">
+              View and manage your full patient roster.
+            </motion.p>
+          </div>
+          <motion.div variants={fadeUp} custom={0.15}>
+            <Link 
+              href="/doctor/appointments"
+              className="px-5 py-2.5 bg-white border border-slate-200 text-slate-700 font-bold text-sm rounded-xl shadow-sm hover:bg-slate-50 hover:text-primary transition-colors flex items-center gap-2"
+            >
+              <Calendar className="w-4 h-4" />
+              All Appointments
+            </Link>
+          </motion.div>
         </motion.div>
 
         {/* ── Stats row ── */}

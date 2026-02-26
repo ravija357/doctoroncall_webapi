@@ -45,6 +45,19 @@ export default function DoctorAppointmentsPage() {
         return matchesFilter && matchesSearch;
     });
 
+    const handleStatusUpdate = async (id: string, status: "confirmed" | "cancelled") => {
+        setAppointments((prev) => prev.map((a) => (a._id === id ? { ...a, status } : a)));
+        try {
+            if (status === "cancelled") {
+                await appointmentService.cancelAppointment(id);
+            } else {
+                await appointmentService.updateStatus(id, status);
+            }
+        } catch { 
+            fetchAppointments(); 
+        }
+    };
+
     if (authLoading || loading) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC]">
@@ -125,7 +138,7 @@ export default function DoctorAppointmentsPage() {
                                     </div>
                                 </div>
 
-                                <div className="w-full md:w-auto flex justify-end">
+                                <div className="w-full md:w-auto flex flex-col items-end gap-2">
                                     <span className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider ${
                                         apt.status === 'confirmed' ? 'bg-emerald-100 text-emerald-700' :
                                         apt.status === 'pending' ? 'bg-amber-100 text-amber-700' :
@@ -134,6 +147,22 @@ export default function DoctorAppointmentsPage() {
                                     }`}>
                                         {apt.status}
                                     </span>
+                                    {apt.status === 'pending' && (
+                                        <div className="flex gap-2">
+                                            <button 
+                                                onClick={() => handleStatusUpdate(apt._id, 'confirmed')}
+                                                className="px-3 py-1 bg-emerald-500 text-white rounded-lg text-xs font-bold hover:bg-emerald-600 transition-colors"
+                                            >
+                                                Accept
+                                            </button>
+                                            <button 
+                                                onClick={() => handleStatusUpdate(apt._id, 'cancelled')}
+                                                className="px-3 py-1 bg-red-500 text-white rounded-lg text-xs font-bold hover:bg-red-600 transition-colors"
+                                            >
+                                                Reject
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         ))
