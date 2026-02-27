@@ -48,7 +48,7 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
     const [callEnded, setCallEnded] = useState(false);
     const [jitsiRoom, setJitsiRoom] = useState<string | null>(null);
 
-    const { user } = useAuth();
+    const { user, refreshUser } = useAuth();
 
     useEffect(() => {
         if (user) {
@@ -82,6 +82,11 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
             newSocket.on('call_user', (data: { from: string; name: string; signal: any; callType: 'video' | 'audio' }) => {
                 console.log('[CALL] Incoming call from:', data.name);
                 setCall({ isReceivingCall: true, from: data.from, name: data.name, signal: data.signal, callType: data.callType || 'video' });
+            });
+
+            newSocket.on('profile_sync', (data: any) => {
+                console.log('[SOCKET] Profile sync signal received', data);
+                refreshUser();
             });
 
             setSocket(newSocket);
