@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { useSocket } from "@/context/SocketContext";
 import { appointmentService } from "@/services/appointment.service";
 import { Appointment } from "@/types";
 import { Calendar, Clock, Search, ChevronLeft } from "lucide-react";
@@ -16,6 +17,7 @@ export default function DoctorAppointmentsPage() {
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('all');
     const [searchQuery, setSearchQuery] = useState('');
+    const { socket } = useSocket();
 
     useEffect(() => {
         if (!authLoading) {
@@ -26,6 +28,20 @@ export default function DoctorAppointmentsPage() {
             fetchAppointments();
         }
     }, [isAuthenticated, user, authLoading, router]);
+
+    useEffect(() => {
+        if (!socket) return;
+        
+        const handleSync = () => {
+            console.log('[SOCKET] Appointment Sync Received');
+            fetchAppointments();
+        };
+
+        socket.on('appointment_sync', handleSync);
+        return () => {
+            socket.off('appointment_sync', handleSync);
+        };
+    }, [socket]);
 
     const fetchAppointments = async () => {
         try {
