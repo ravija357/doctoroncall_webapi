@@ -28,9 +28,9 @@ export default function LoginPage() {
           }
           footer={undefined}
         >
-          <FeatureItem icon={<CheckCircle2 className="text-primary-light" />} text="Instant Booking with 500+ Specialists" />
-          <FeatureItem icon={<CheckCircle2 className="text-primary-light" />} text="Secure Electronic Medical Records" />
-          <FeatureItem icon={<CheckCircle2 className="text-primary-light" />} text="24/7 Access to Care Dashboard" />
+          <FeatureItem icon={<CheckCircle2 className="text-white" />} text="Instant Booking with 500+ Specialists" />
+          <FeatureItem icon={<CheckCircle2 className="text-white" />} text="Secure Electronic Medical Records" />
+          <FeatureItem icon={<CheckCircle2 className="text-white" />} text="24/7 Access to Care Dashboard" />
         </AuthSidebar>
       }
     >

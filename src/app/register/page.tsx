@@ -20,10 +20,9 @@ export default function RegisterPage() {
       sidebar={
         <AuthSidebar
           title="Join the future of digital healthcare."
-          bgClassName="bg-slate-900"
           badgeContent={
             <>
-              <ShieldCheck className="h-4 w-4 text-primary-light" />
+              <ShieldCheck className="h-4 w-4 text-white" />
               HIPAA Compliant Security
             </>
           }

@@ -7,7 +7,8 @@ import { useNotifications } from "@/context/NotificationContext";
 import { useRole } from "@/context/RoleContext";
 import { useState } from "react";
 import { Button } from "./ui/button";
-import { User, LogOut, ChevronDown, Menu, LayoutDashboard, Calendar, Users, MessageSquare, Bell, Search, Clock, Stethoscope, FileText, Pill, History, UserCog, HeartPulse } from "lucide-react";
+import { User, LogOut, ChevronDown, Menu, LayoutDashboard, Calendar, Users, MessageSquare, Bell, Search, Clock, Stethoscope, FileText, Pill, History, UserCog, HeartPulse, Sun, Moon } from "lucide-react";
+import { useDarkMode } from "@/context/DarkModeContext";
 import { getImageUrl } from "@/utils/imageHelper";
 import { useEffect, useRef } from "react";
 import { doctorService } from "@/services/doctor.service";
@@ -239,6 +240,9 @@ export default function Navbar() {
              </AnimatePresence>
           </div>
 
+          {/* Theme Toggle */}
+          <ThemeToggle />
+
           {/* Notification Bell */}
           {user && <NotificationBell theme={theme} />}
           
@@ -328,5 +332,23 @@ function NotificationBell({ theme }: { theme: any }) {
                 </span>
             )}
         </Link>
+    );
+}
+
+function ThemeToggle() {
+    const { isDark, toggle } = useDarkMode();
+    
+    return (
+        <button
+            onClick={() => toggle()}
+            className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 text-slate-400 dark:text-slate-500 hover:text-primary dark:hover:text-primary transition-all group"
+            title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
+        >
+            {isDark ? (
+                <Sun className="w-5 h-5 transition-transform group-hover:rotate-45" />
+            ) : (
+                <Moon className="w-5 h-5 transition-transform group-hover:-rotate-12" />
+            )}
+        </button>
     );
 }

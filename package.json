@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev -H 0.0.0.0",
+    "dev": "rm -rf .next/dev/lock && (lsof -ti:3000 | xargs kill -9 2>/dev/null || true) && TURBOPACK=0 next dev -H 0.0.0.0",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"

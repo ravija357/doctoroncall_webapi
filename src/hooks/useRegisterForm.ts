@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useAuth } from "@/context/AuthContext";
 import { useRole } from "@/context/RoleContext";
+import { toast } from "sonner";
 
 const registerSchema = z.object({
     firstName: z.string().min(2, "First name must be at least 2 characters"),
@@ -46,6 +47,7 @@ export const useRegisterForm = () => {
                 lastName: data.lastName,
                 role: data.role
             });
+            toast.success("Account created successfully! Please sign in with your credentials.");
         } catch (err: any) {
             setError(err.response?.data?.message || "Registration failed. Please try again.");
         } finally {

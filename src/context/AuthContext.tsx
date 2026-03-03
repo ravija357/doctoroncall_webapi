@@ -13,6 +13,7 @@ interface AuthContextType {
   register: (data: any) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
+  updateUserLocal: (user: User) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -31,6 +32,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const res = await api.get<{ success: boolean; user: User }>('/auth/me');
       if (res.data.success) {
         setUser(res.data.user);
+        localStorage.setItem('user', JSON.stringify(res.data.user));
         if (res.data.user.role) localStorage.setItem('selected_role', res.data.user.role);
       }
     } catch (error) {
@@ -44,6 +46,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const res = await api.post<LoginResponse>('/auth/login', data);
     if (res.data.success) {
       setUser(res.data.user);
+      localStorage.setItem('user', JSON.stringify(res.data.user));
       if (res.data.user.role) localStorage.setItem('selected_role', res.data.user.role);
       if (res.data.user.role) localStorage.setItem('selected_role', res.data.user.role);
       
@@ -56,9 +59,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const register = async (data: any) => {
     const res = await api.post<LoginResponse>('/auth/register', data);
     if (res.data.success) {
-      setUser(res.data.user);
-      if (res.data.user.role) localStorage.setItem('selected_role', res.data.user.role);
-      router.push('/dashboard');
+      // Don't auto-login, just redirect to login page as requested
+      router.push('/login');
     }
   };
 
@@ -66,6 +68,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       await api.post('/auth/logout');
       setUser(null);
+      localStorage.removeItem('user');
       localStorage.removeItem('selected_role');
       router.push('/login');
     } catch (error) {
@@ -83,7 +86,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       login, 
       register, 
       logout,
-      refreshUser: checkAuth
+      refreshUser: checkAuth,
+      updateUserLocal: (u: User) => {
+        setUser(u);
+        localStorage.setItem('user', JSON.stringify(u));
+      }
     }}>
       {children}
     </AuthContext.Provider>
