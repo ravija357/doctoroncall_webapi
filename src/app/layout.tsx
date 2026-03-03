@@ -15,6 +15,7 @@ import Footer from "@/components/Footer";
 import RealTimeSync from "@/components/RealTimeSync";
 import ThemeToaster from "@/components/ThemeToaster";
 import { Toaster } from "sonner"; // For backward compatibility if needed, but ThemeToaster handles it
+import { GoogleOAuthProvider } from '@react-oauth/google';
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -31,7 +32,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <AuthProvider>
+        <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ""}>
+          <AuthProvider>
             <RoleProvider>
                 <SocketProvider>
                     <NotificationProvider>
@@ -47,7 +49,8 @@ export default function RootLayout({
                     </NotificationProvider>
                 </SocketProvider>
             </RoleProvider>
-        </AuthProvider>
+          </AuthProvider>
+        </GoogleOAuthProvider>
       </body>
     </html>
   );

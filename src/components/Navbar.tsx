@@ -36,7 +36,7 @@ const PATIENT_FEATURES = [
 ];
 
 export default function Navbar() {
-  const { user, logout } = useAuth();
+  const { user, logout, isAuthenticated } = useAuth();
   const { role: storedRole } = useRole();
   const { unreadMessageCount: unreadCount } = useNotifications();
   const [searchQuery, setSearchQuery] = useState("");
@@ -61,6 +61,10 @@ export default function Navbar() {
   const isDoctor = user ? user.role === 'doctor' : storedRole === 'doctor';
 
   const handleFeatureClick = (route: string) => {
+      if (!isAuthenticated) {
+          router.push('/login');
+          return;
+      }
       router.push(route);
       setSearchQuery("");
       setShowResults(false);
@@ -140,10 +144,10 @@ export default function Navbar() {
             </>
           ) : (
             <>
-                <NavLink href="/dashboard" theme={theme}>Dashboard</NavLink>
-                <NavLink href="/doctors" theme={theme}>Find Doctors</NavLink>
-                <NavLink href="/appointments" theme={theme}>Appointments</NavLink>
-                <NavLink href="/messages" theme={theme} badge={unreadCount}>Messages</NavLink>
+                <NavLink href="/dashboard" theme={theme} authRequired={true}>Dashboard</NavLink>
+                <NavLink href="/doctors" theme={theme} authRequired={true}>Find Doctors</NavLink>
+                <NavLink href="/appointments" theme={theme} authRequired={true}>Appointments</NavLink>
+                <NavLink href="/messages" theme={theme} badge={unreadCount} authRequired={true}>Messages</NavLink>
                 <NavLink href="/about" theme={theme}>How it Works</NavLink>
             </>
           )}
@@ -294,13 +298,23 @@ export default function Navbar() {
   );
 }
 
-function NavLink({ href, children, theme, badge }: { href: string, children: React.ReactNode, theme: any, badge?: number }) {
+function NavLink({ href, children, theme, badge, authRequired = false }: { href: string, children: React.ReactNode, theme: any, badge?: number, authRequired?: boolean }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { isAuthenticated } = useAuth();
   const isActive = pathname === href || pathname.startsWith(href + '/');
+
+  const handleClick = (e: React.MouseEvent) => {
+      if (authRequired && !isAuthenticated) {
+          e.preventDefault();
+          router.push('/login');
+      }
+  };
 
   return (
     <Link
       href={href}
+      onClick={handleClick}
       className={`text-sm font-bold transition-colors relative group flex items-center gap-1 ${
         isActive ? 'text-primary' : `text-gray-500 ${theme.hoverText}`
       }`}
@@ -323,8 +337,18 @@ function NavLink({ href, children, theme, badge }: { href: string, children: Rea
 
 function NotificationBell({ theme }: { theme: any }) {
     const { unreadCount } = useNotifications();
+    const { isAuthenticated } = useAuth();
+    const router = useRouter();
+
+    const handleClick = (e: React.MouseEvent) => {
+        if (!isAuthenticated) {
+            e.preventDefault();
+            router.push('/login');
+        }
+    };
+
     return (
-        <Link href="/notifications" className="relative group p-2">
+        <Link href="/notifications" onClick={handleClick} className="relative group p-2">
             <Bell className={`w-6 h-6 text-gray-400 group-hover:text-gray-600 transition-colors ${theme.hoverText}`} />
             {unreadCount > 0 && (
                 <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white ring-2 ring-white">

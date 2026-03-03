@@ -10,6 +10,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (data: any) => Promise<void>;
+  googleLogin: (idToken: string) => Promise<void>;
   register: (data: any) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
@@ -48,6 +49,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(res.data.user);
       localStorage.setItem('user', JSON.stringify(res.data.user));
       if (res.data.user.role) localStorage.setItem('selected_role', res.data.user.role);
+      
+      if (res.data.user.role === 'admin') router.push('/admin');
+      else if (res.data.user.role === 'doctor') router.push('/doctor/dashboard');
+      else router.push('/dashboard');
+    }
+  };
+
+  const googleLogin = async (idToken: string) => {
+    const res = await api.post<LoginResponse>('/auth/google', { idToken });
+    if (res.data.success) {
+      setUser(res.data.user);
+      localStorage.setItem('user', JSON.stringify(res.data.user));
       if (res.data.user.role) localStorage.setItem('selected_role', res.data.user.role);
       
       if (res.data.user.role === 'admin') router.push('/admin');
@@ -84,6 +97,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isAuthenticated: !!user, 
       isLoading: loading, 
       login, 
+      googleLogin,
       register, 
       logout,
       refreshUser: checkAuth,

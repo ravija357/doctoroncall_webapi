@@ -1,137 +1,142 @@
 "use client";
 
-import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useRole } from '@/context/RoleContext';
-import { Stethoscope, User, ArrowRight, Activity, ShieldCheck, HeartPulse } from 'lucide-react';
+import { Stethoscope, User, ArrowRight, HeartPulse } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useState, useEffect } from 'react';
+import Background3D from '@/components/landing/Background3D';
 
-export default function RoleSelectionPage() {
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.2,
+      delayChildren: 0.3,
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: { y: 20, opacity: 0 },
+  visible: {
+    y: 0,
+    opacity: 1,
+    transition: { duration: 0.8, ease: "easeOut" as any },
+  },
+};
+
+export default function LandingPage() {
   const { setRole } = useRole();
   const router = useRouter();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleSelectRole = (selectedRole: 'doctor' | 'patient') => {
     setRole(selectedRole);
-    if (selectedRole === 'doctor') {
-      router.push('/login');
-    } else {
-      router.push('/home');
-    }
+    router.push('/login');
   };
 
+  if (!mounted) return null;
+
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center relative overflow-hidden font-sans selection:bg-blue-500/30">
+    <div className="min-h-screen bg-[#70C0FA] flex flex-col items-center justify-start relative overflow-hidden font-sans">
       
-      {/* Dynamic Backgrounds */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 left-1/4 w-[50vw] h-[50vw] bg-blue-500/10 rounded-full blur-[120px] mix-blend-screen animate-pulse duration-[4000ms]" />
-        <div className="absolute bottom-0 right-1/4 w-[50vw] h-[50vw] bg-emerald-500/10 rounded-full blur-[120px] mix-blend-screen animate-pulse duration-[5000ms]" />
-      </div>
+      {/* 3D Background Layer */}
+      <Background3D />
 
-      <div className="relative z-10 w-full max-w-6xl px-4">
+      <main className="relative z-10 w-full max-w-md mx-auto px-8 pt-20 pb-12 flex flex-col items-center min-h-screen">
         
-        {/* Header Section */}
-        <div className="text-center mb-20 space-y-6">
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="inline-flex items-center justify-center p-3 px-6 bg-white/5 border border-white/10 rounded-full backdrop-blur-md mb-4"
-          >
-             <Activity className="w-5 h-5 text-blue-400 mr-2" />
-             <span className="text-blue-100 font-medium tracking-wide text-sm">Next-Gen Healthcare Platform</span>
-          </motion.div>
-          
-          <motion.h1 
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-            className="text-5xl md:text-7xl font-bold text-white tracking-tight"
-          >
-            Doctor<span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400">OnCall</span>
-          </motion.h1>
-          
-          <motion.p 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.8, delay: 0.4 }}
-            className="text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed"
-          >
-            Experience the future of medical care. Seamlessly connecting world-class specialists with patients worldwide.
-          </motion.p>
-        </div>
+        {/* Logo Card - Matching Reference Exactly */}
+        <motion.div
+          initial={{ opacity: 0, y: -50, scale: 0.9 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+          className="w-48 h-48 bg-white !bg-white rounded-[3rem] shadow-2xl flex flex-col items-center justify-center p-6 mb-16 relative group"
+        >
+          <div className="absolute inset-0 bg-blue-100/50 rounded-[3rem] blur-xl group-hover:blur-2xl transition-all duration-500 opacity-0 group-hover:opacity-100" />
+          <div className="relative z-10 w-full h-full flex flex-col items-center justify-center">
+             {/* Use the actual Logo Image */}
+             <div className="relative mb-2 w-32 h-32 flex items-center justify-center">
+                <motion.img
+                  src="/assets/images/doctoroncall_logo.png"
+                  alt="DoctorOnCall Logo"
+                  className="w-full h-full object-contain"
+                />
+                <motion.div
+                  animate={{ scale: [1, 1.2, 1], opacity: [0.1, 0.2, 0.1] }}
+                  transition={{ duration: 3, repeat: Infinity }}
+                  className="absolute inset-0 bg-[#70C0FA]/20 rounded-full blur-xl"
+                />
+             </div>
+             <span className="text-[#70C0FA] font-black text-xl tracking-tighter uppercase">doctoroncall</span>
+          </div>
+        </motion.div>
 
-        {/* Cards Container */}
-        <div className="grid md:grid-cols-2 gap-8 md:gap-12 max-w-4xl mx-auto">
-          
-          {/* Doctor Card */}
+        {/* "I'm a" Text - Matching Reference Serif Style */}
+        <motion.h1
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5, duration: 1 }}
+          className="text-5xl font-serif italic text-white mb-12 drop-shadow-lg"
+        >
+          I'm a
+        </motion.h1>
+
+        {/* Role Selection Buttons - Matching Reference Exactly with Premium Effects */}
+        <div className="w-full space-y-6">
           <motion.button
-            initial={{ opacity: 0, x: -50 }}
+            initial={{ opacity: 0, x: -30 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6, delay: 0.5 }}
+            transition={{ delay: 0.7, duration: 0.8 }}
+            whileHover={{ 
+              scale: 1.03, 
+              y: -4,
+              boxShadow: "0 20px 25px -5px rgba(59, 130, 246, 0.2), 0 10px 10px -5px rgba(59, 130, 246, 0.1)"
+            }}
+            whileTap={{ scale: 0.97 }}
             onClick={() => handleSelectRole('doctor')}
-            className="group relative h-96 bg-gradient-to-br from-slate-900 to-slate-900/50 p-1 rounded-[2.5rem] hover:scale-[1.02] transition-all duration-500"
+            className="w-full py-6 bg-white !bg-white rounded-3xl shadow-xl shadow-blue-900/10 flex items-center justify-center group relative overflow-hidden transition-shadow duration-300"
           >
-            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-[2.5rem]" />
-            <div className="absolute inset-[1px] bg-slate-950 rounded-[2.45rem] overflow-hidden">
-                <div className="absolute top-0 right-0 p-12 opacity-5 group-hover:opacity-10 transition-all duration-500 group-hover:scale-110 group-hover:rotate-12">
-                     <ShieldCheck className="w-64 h-64 text-emerald-500" />
-                </div>
-                
-                <div className="relative h-full flex flex-col justify-between p-10 z-10 text-left">
-                    <div>
-                        <div className="w-16 h-16 bg-emerald-500/10 rounded-2xl flex items-center justify-center text-emerald-400 mb-6 group-hover:bg-emerald-500 group-hover:text-white transition-colors duration-300">
-                             <Stethoscope className="w-8 h-8" />
-                        </div>
-                        <h2 className="text-3xl font-bold text-white mb-3 group-hover:text-emerald-400 transition-colors">I'm a Doctor</h2>
-                        <p className="text-slate-400 leading-relaxed group-hover:text-slate-300 transition-colors">
-                            Join our network of top-tier professionals. Manage your practice, consult remotely, and expand your reach.
-                        </p>
-                    </div>
-
-                    <div className="flex items-center text-emerald-500 font-bold group-hover:translate-x-2 transition-transform duration-300">
-                        <span className="uppercase tracking-wider text-sm">Enter Portal</span>
-                        <ArrowRight className="w-5 h-5 ml-3" />
-                    </div>
-                </div>
-            </div>
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-50/80 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 ease-in-out" />
+            <span className="text-3xl font-serif text-[#70C0FA] relative z-10">Doctor</span>
           </motion.button>
 
-          {/* Patient Card */}
           <motion.button
-            initial={{ opacity: 0, x: 50 }}
+            initial={{ opacity: 0, x: 30 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6, delay: 0.6 }}
+            transition={{ delay: 0.9, duration: 0.8 }}
+            whileHover={{ 
+              scale: 1.03, 
+              y: -4,
+              boxShadow: "0 20px 25px -5px rgba(59, 130, 246, 0.2), 0 10px 10px -5px rgba(59, 130, 246, 0.1)"
+            }}
+            whileTap={{ scale: 0.97 }}
             onClick={() => handleSelectRole('patient')}
-            className="group relative h-96 bg-gradient-to-br from-slate-900 to-slate-900/50 p-1 rounded-[2.5rem] hover:scale-[1.02] transition-all duration-500"
+            className="w-full py-6 bg-white !bg-white rounded-3xl shadow-xl shadow-blue-900/10 flex items-center justify-center group relative overflow-hidden transition-shadow duration-300"
           >
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-[2.5rem]" />
-            <div className="absolute inset-[1px] bg-slate-950 rounded-[2.45rem] overflow-hidden">
-                <div className="absolute top-0 right-0 p-12 opacity-5 group-hover:opacity-10 transition-all duration-500 group-hover:scale-110 group-hover:-rotate-12">
-                     <HeartPulse className="w-64 h-64 text-blue-500" />
-                </div>
-                
-                <div className="relative h-full flex flex-col justify-between p-10 z-10 text-left">
-                    <div>
-                        <div className="w-16 h-16 bg-blue-500/10 rounded-2xl flex items-center justify-center text-blue-400 mb-6 group-hover:bg-blue-500 group-hover:text-white transition-colors duration-300">
-                             <User className="w-8 h-8" />
-                        </div>
-                        <h2 className="text-3xl font-bold text-white mb-3 group-hover:text-blue-400 transition-colors">I'm a Patient</h2>
-                        <p className="text-slate-400 leading-relaxed group-hover:text-slate-300 transition-colors">
-                            Access premium healthcare instantly. Book appointments, consult specialists, and manage your health data securey.
-                        </p>
-                    </div>
-
-                    <div className="flex items-center text-blue-500 font-bold group-hover:translate-x-2 transition-transform duration-300">
-                        <span className="uppercase tracking-wider text-sm">Start Journey</span>
-                        <ArrowRight className="w-5 h-5 ml-3" />
-                    </div>
-                </div>
-            </div>
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-50/80 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 ease-in-out" />
+            <span className="text-3xl font-serif text-[#70C0FA] relative z-10">Patient</span>
           </motion.button>
         </div>
 
-      </div>
+        {/* Bottom Accent */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 0.3 }}
+          transition={{ delay: 1.5, duration: 2 }}
+          className="mt-auto pt-12"
+        >
+          <div className="w-12 h-1 bg-white/50 rounded-full" />
+        </motion.div>
+      </main>
+
+      {/* Noise Texture Overlay */}
+      <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')]" />
     </div>
   );
 }
