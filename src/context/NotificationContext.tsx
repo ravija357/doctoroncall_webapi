@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { useAuth } from './AuthContext';
 import { useSocket } from './SocketContext';
-import axios from 'axios';
+import api from '@/services/api';
 import { toast } from 'sonner';
 
 export interface INotification {
@@ -39,14 +39,14 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
 
   const fetchNotifications = async () => {
     try {
-      const res = await axios.get('http://localhost:3001/api/notifications', { withCredentials: true });
+      const res = await api.get('/notifications');
       if (res.data.success) {
         setNotifications(res.data.data);
         setUnreadCount(res.data.unreadCount);
       }
       
       // Fetch unread messages
-      const msgRes = await axios.get('http://localhost:3001/api/messages/unread-count', { withCredentials: true });
+      const msgRes = await api.get('/messages/unread-count');
       if (msgRes.data.success) {
           setUnreadMessageCount(msgRes.data.count);
       }
@@ -112,7 +112,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
 
   const markAsRead = async (id: string) => {
     try {
-      await axios.put(`http://localhost:3001/api/notifications/${id}/read`, {}, { withCredentials: true });
+      await api.put(`/notifications/${id}/read`, {});
       setNotifications(prev => prev.map(n => n._id === id ? { ...n, isRead: true } : n));
       setUnreadCount(prev => Math.max(0, prev - 1));
     } catch (error) {
@@ -122,7 +122,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
 
   const markAllAsRead = async () => {
     try {
-      await axios.put(`http://localhost:3001/api/notifications/read-all`, {}, { withCredentials: true });
+      await api.put(`/notifications/read-all`, {});
       setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
       setUnreadCount(0);
     } catch (error) {
@@ -132,10 +132,10 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
 
   const markMessagesAsRead = async (senderId: string) => {
       try {
-          await axios.put(`http://localhost:3001/api/messages/read/${senderId}`, {}, { withCredentials: true });
+          await api.put(`/messages/read/${senderId}`, {});
           // Optimistically decrement? Or just re-fetch?
           // Re-fetching is safer to get exact count
-           const msgRes = await axios.get('http://localhost:3001/api/messages/unread-count', { withCredentials: true });
+           const msgRes = await api.get('/messages/unread-count');
            if (msgRes.data.success) {
                setUnreadMessageCount(msgRes.data.count);
            }

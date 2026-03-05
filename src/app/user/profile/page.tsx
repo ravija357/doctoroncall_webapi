@@ -5,12 +5,16 @@ import AuthGuard from "../../components/AuthGuard";
 import {
   Mail, MapPin, Calendar, User, ShieldCheck, PenTool,
   Settings, Moon, Bell, Sparkles, Save, CheckCircle2,
-  Phone, FileText, Stethoscope,
+  Phone, FileText, Stethoscope, Award, Building2, Plus, X,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useDarkMode } from "@/context/DarkModeContext";
 import { getImageUrl } from "@/utils/imageHelper";
 import { motion, AnimatePresence } from "framer-motion";
+import { doctorService } from "@/services/doctor.service";
+import { Doctor } from "@/types";
+import { toast } from "sonner";
+import api from "@/services/api";
 
 /* ─── animation helpers ─────────────────────────── */
 const ease = [0.16, 1, 0.3, 1] as const;
@@ -136,6 +140,18 @@ export default function UserProfilePage() {
   const [preview, setPreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [doctorProfile, setDoctorProfile] = useState<Doctor | null>(null);
+  const [doctorFormData, setDoctorFormData] = useState({
+    specialization: '',
+    experience: '',
+    qualifications: [] as string[],
+    bio: '',
+    fees: '',
+    hospital: '',
+  });
+  const [newQualification, setNewQualification] = useState('');
+  const [doctorSaving, setDoctorSaving] = useState(false);
+  const [doctorSaved, setDoctorSaved] = useState(false);
 
   const { isDark, set: setDarkMode } = useDarkMode();
 
@@ -167,6 +183,27 @@ export default function UserProfilePage() {
         bio: (user as any).bio || "",
         address: (user as any).address || "Kathmandu, Nepal",
       });
+    }
+  }, [user]);
+
+  // Load doctor profile if user is a doctor
+  useEffect(() => {
+    if (user?.role === 'doctor') {
+      doctorService.getProfile()
+        .then(data => {
+          if (data) {
+            setDoctorProfile(data);
+            setDoctorFormData({
+              specialization: data.specialization || '',
+              experience: String(data.experience || ''),
+              qualifications: data.qualifications || [],
+              bio: data.bio || '',
+              fees: String(data.fees || ''),
+              hospital: data.hospital || '',
+            });
+          }
+        })
+        .catch(() => null);
     }
   }, [user]);
 
@@ -208,23 +245,64 @@ export default function UserProfilePage() {
     data.append("preferences", JSON.stringify(preferences));
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
-      const res = await fetch(`${apiUrl}/api/auth/${user._id}`, {
-        method: "PUT",
-        credentials: "include",
-        body: data,
+      await api.put(`/auth/${user._id}`, data, {
+        headers: { 'Content-Type': 'multipart/form-data' },
       });
-      if (res.ok) {
-        await refreshUser();
-        setImage(null);
-        setSaved(true);
-        setTimeout(() => setSaved(false), 3000);
-      }
-    } catch (e) {
+      await refreshUser();
+      setImage(null);
+      setSaved(true);
+      toast.success('Profile saved!');
+      setTimeout(() => setSaved(false), 3000);
+    } catch (e: any) {
       console.error(e);
+      toast.error(e.response?.data?.message || 'Failed to save profile');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleUpdateDoctorProfile = async () => {
+    if (!user?._id) return;
+    setDoctorSaving(true);
+    try {
+      const payload = {
+        specialization: doctorFormData.specialization,
+        experience: Number(doctorFormData.experience),
+        qualifications: doctorFormData.qualifications,
+        bio: doctorFormData.bio,
+        fees: Number(doctorFormData.fees),
+        hospital: doctorFormData.hospital,
+      };
+
+      if (doctorProfile) {
+        await doctorService.updateProfile(payload);
+      } else {
+        // Create new profile via the api service (handles auth cookies)
+        await api.post('/doctors/profile', payload);
+        // Reload the doctor profile to confirm creation
+        const created = await doctorService.getProfile();
+        setDoctorProfile(created);
+      }
+      setDoctorSaved(true);
+      toast.success('Professional profile updated! Patients can now find you.');
+      setTimeout(() => setDoctorSaved(false), 3000);
+    } catch (e: any) {
+      toast.error(e.response?.data?.message || 'Failed to update professional profile');
+    } finally {
+      setDoctorSaving(false);
+    }
+  };
+
+  const addQualification = () => {
+    const q = newQualification.trim();
+    if (q && !doctorFormData.qualifications.includes(q)) {
+      setDoctorFormData(prev => ({ ...prev, qualifications: [...prev.qualifications, q] }));
+    }
+    setNewQualification('');
+  };
+
+  const removeQualification = (q: string) => {
+    setDoctorFormData(prev => ({ ...prev, qualifications: prev.qualifications.filter(e => e !== q) }));
   };
 
   if (!user) return null;
@@ -404,6 +482,127 @@ export default function UserProfilePage() {
                   </motion.button>
                 </div>
               </motion.div>
+
+              {/* Doctor Professional Profile Section (Doctors Only) */}
+              {isDoctor && (
+                <motion.div
+                  className="bg-white rounded-[2rem] p-8 border border-primary/20 shadow-sm"
+                  initial={{ opacity: 0, y: 24 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.8, ease, delay: 0.28 }}
+                >
+                  <div className="flex items-center gap-3 mb-7">
+                    <div className="w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center">
+                      <Stethoscope className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                      <h3 className="font-black text-slate-900">Professional Profile</h3>
+                      <p className="text-xs text-slate-400 mt-0.5">This information is visible to patients on the Find Doctors page</p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <FormField
+                      label="Specialization" name="specialization"
+                      value={doctorFormData.specialization}
+                      onChange={e => setDoctorFormData(p => ({ ...p, specialization: e.target.value }))}
+                      placeholder="e.g. Cardiologist"
+                      icon={<Stethoscope className="w-4 h-4" />}
+                    />
+                    <FormField
+                      label="Years of Experience" name="experience" type="number"
+                      value={doctorFormData.experience}
+                      onChange={e => setDoctorFormData(p => ({ ...p, experience: e.target.value }))}
+                      placeholder="e.g. 5"
+                      icon={<Award className="w-4 h-4" />}
+                    />
+                    <FormField
+                      label="Consultation Fee (Rs.)" name="fees" type="number"
+                      value={doctorFormData.fees}
+                      onChange={e => setDoctorFormData(p => ({ ...p, fees: e.target.value }))}
+                      placeholder="e.g. 500"
+                      icon={<span className="text-xs font-black text-slate-400">Rs.</span>}
+                    />
+                    <FormField
+                      label="Hospital / Clinic" name="hospital"
+                      value={doctorFormData.hospital}
+                      onChange={e => setDoctorFormData(p => ({ ...p, hospital: e.target.value }))}
+                      placeholder="e.g. City General Hospital"
+                      icon={<Building2 className="w-4 h-4" />}
+                    />
+                  </div>
+
+                  <TextAreaField
+                    label="Professional Bio" name="bio"
+                    value={doctorFormData.bio}
+                    onChange={e => setDoctorFormData(p => ({ ...p, bio: e.target.value }))}
+                    placeholder="Describe your expertise, approach to patient care, and achievements..."
+                  />
+
+                  {/* Qualifications */}
+                  <div className="mt-4 space-y-1.5">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Qualifications / Degrees</label>
+                    <div className="flex flex-wrap gap-2 mb-2">
+                      {doctorFormData.qualifications.map(q => (
+                        <span key={q} className="inline-flex items-center gap-1.5 px-3 py-1 bg-primary/10 text-primary rounded-full text-xs font-bold">
+                          {q}
+                          <button type="button" onClick={() => removeQualification(q)}><X className="w-3 h-3" /></button>
+                        </span>
+                      ))}
+                    </div>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={newQualification}
+                        onChange={e => setNewQualification(e.target.value)}
+                        onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addQualification())}
+                        placeholder="Add a degree (e.g. MBBS, MD)"
+                        className="flex-1 px-4 py-3 rounded-2xl border border-slate-200 text-sm font-medium text-slate-700 bg-white outline-none focus:border-primary focus:ring-2 focus:ring-primary/15 placeholder:text-slate-300"
+                      />
+                      <button
+                        type="button"
+                        onClick={addQualification}
+                        className="px-4 py-3 rounded-2xl bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                      >
+                        <Plus className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Save Doctor Profile Button */}
+                  <div className="flex items-center justify-end gap-4 mt-6">
+                    <AnimatePresence>
+                      {doctorSaved && (
+                        <motion.div
+                          initial={{ opacity: 0, x: 10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: 10 }}
+                          className="flex items-center gap-2 text-sm font-bold text-emerald-600"
+                        >
+                          <CheckCircle2 className="w-4 h-4" /> Visible to patients!
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                    <motion.button
+                      onClick={handleUpdateDoctorProfile}
+                      disabled={doctorSaving}
+                      whileHover={!doctorSaving ? { scale: 1.03 } : {}}
+                      whileTap={!doctorSaving ? { scale: 0.97 } : {}}
+                      className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-black text-sm transition-all ${
+                        doctorSaving
+                          ? "bg-slate-200 text-slate-400 cursor-not-allowed"
+                          : "bg-primary hover:bg-primary-hover text-white shadow-md shadow-primary/25"
+                      }`}
+                    >
+                      {doctorSaving ? (
+                        <><span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />Saving…</>
+                      ) : (
+                        <><Save className="w-4 h-4" /> Publish Profile</>
+                      )}
+                    </motion.button>
+                  </div>
+                </motion.div>
+              )}
 
               {/* Preferences */}
               <motion.div

@@ -4,13 +4,15 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import api from '../services/api';
 import { User, AuthState, LoginResponse } from '../types';
 import { useRouter } from 'next/navigation';
+import { useRole } from './RoleContext';
 
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (data: any) => Promise<void>;
-  googleLogin: (idToken: string) => Promise<void>;
+  googleLogin: (idToken: string, role?: string) => Promise<void>;
+  appleLogin: (idToken: string, role?: string) => Promise<void>;
   register: (data: any) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
@@ -23,6 +25,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const { clearRole } = useRole();
 
   useEffect(() => {
     checkAuth();
@@ -56,8 +59,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const googleLogin = async (idToken: string) => {
-    const res = await api.post<LoginResponse>('/auth/google', { idToken });
+  const googleLogin = async (idToken: string, role?: string) => {
+    const res = await api.post<LoginResponse>('/auth/google', { idToken, role });
+    if (res.data.success) {
+      setUser(res.data.user);
+      localStorage.setItem('user', JSON.stringify(res.data.user));
+      if (res.data.user.role) localStorage.setItem('selected_role', res.data.user.role);
+      
+      if (res.data.user.role === 'admin') router.push('/admin');
+      else if (res.data.user.role === 'doctor') router.push('/doctor/dashboard');
+      else router.push('/dashboard');
+    }
+  };
+
+  const appleLogin = async (idToken: string, role?: string) => {
+    const res = await api.post<LoginResponse>('/auth/apple', { idToken, role });
     if (res.data.success) {
       setUser(res.data.user);
       localStorage.setItem('user', JSON.stringify(res.data.user));
@@ -79,15 +95,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = async () => {
     try {
+      clearRole();
       await api.post('/auth/logout');
       setUser(null);
       localStorage.removeItem('user');
-      localStorage.removeItem('selected_role');
-      router.push('/login');
+      router.push('/');
     } catch (error) {
       console.error('Logout failed', error);
+      clearRole();
       setUser(null);
-      router.push('/login');
+      router.push('/');
     }
   };
 
@@ -98,6 +115,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isLoading: loading, 
       login, 
       googleLogin,
+      appleLogin,
       register, 
       logout,
       refreshUser: checkAuth,

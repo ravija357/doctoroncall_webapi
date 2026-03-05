@@ -37,6 +37,7 @@ export function useChat() {
                     role: c.role,
                     isOnline: onlineUsers.includes(c.id),
                     lastMessage: c.lastMessage,
+                    lastMessageTime: c.lastMessageTime || (c.lastMessage ? new Date().toISOString() : undefined),
                     unread: c.unread || 0
                 }));
 
@@ -145,17 +146,19 @@ export function useChat() {
                             return {
                                 ...c,
                                 lastMessage: msg.content,
+                                lastMessageTime: msg.createdAt || new Date().toISOString(),
                                 unread: isActive ? 0 : (c.unread || 0) + 1
                             };
                         }
                         return c;
                     });
 
-                    // Move to top
+                    // Move to top — sort by lastMessageTime descending
                     updatedContacts.sort((a, b) => {
-                        if (a.id === senderId) return -1;
-                        if (b.id === senderId) return 1;
-                        return 0;
+                        if (!a.lastMessageTime && !b.lastMessageTime) return 0;
+                        if (!a.lastMessageTime) return 1;
+                        if (!b.lastMessageTime) return -1;
+                        return new Date(b.lastMessageTime).getTime() - new Date(a.lastMessageTime).getTime();
                     });
                     return updatedContacts;
                 }
@@ -190,16 +193,21 @@ export function useChat() {
             setContacts(prev => {
                 let updated = prev.map(c => {
                     if (c.id === message.receiver) {
-                        return { ...c, lastMessage: message.content };
+                        return {
+                            ...c,
+                            lastMessage: message.content,
+                            lastMessageTime: message.createdAt || new Date().toISOString(),
+                        };
                     }
                     return c;
                 });
 
-                // Sort
+                // Sort by lastMessageTime descending
                 updated.sort((a, b) => {
-                    if (a.id === message.receiver) return -1;
-                    if (b.id === message.receiver) return 1;
-                    return 0;
+                    if (!a.lastMessageTime && !b.lastMessageTime) return 0;
+                    if (!a.lastMessageTime) return 1;
+                    if (!b.lastMessageTime) return -1;
+                    return new Date(b.lastMessageTime).getTime() - new Date(a.lastMessageTime).getTime();
                 });
 
                 return updated;
@@ -290,12 +298,14 @@ export function useChat() {
         };
     }, [socket, activeContact, contacts]);
 
-    const sendMessage = (content: string, type: 'text' | 'image' | 'file' = 'text') => {
-        if (!socket || !activeContact) {
-            console.error("Cannot send message: Socket or ActiveContact missing", {
+    const sendMessage = (content: string, type: 'text' | 'image' | 'file' = 'text', overrideReceiverId?: string) => {
+        const receiverId = overrideReceiverId || activeContact?.id;
+
+        if (!socket || !receiverId) {
+            console.error("Cannot send message: Socket or Receiver missing", {
                 socket: !!socket,
                 socketId: socket?.id,
-                activeContact: activeContact
+                receiverId
             });
             return;
         }
@@ -303,7 +313,7 @@ export function useChat() {
         // 1. Prepare data for Socket (needs receiverId)
         const socketPayload = {
             sender: user?._id,
-            receiverId: activeContact.id,
+            receiverId: receiverId,
             content,
             type,
             createdAt: new Date().toISOString()
@@ -315,7 +325,7 @@ export function useChat() {
         const optimisticMsg: Message = {
             _id: Math.random().toString(), // Temp ID
             sender: user?._id || '', // Ensure string
-            receiver: activeContact.id,
+            receiver: receiverId,
             content,
             type,
             createdAt: socketPayload.createdAt

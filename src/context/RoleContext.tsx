@@ -7,6 +7,7 @@ type Role = 'doctor' | 'patient' | null;
 interface RoleContextType {
   role: Role;
   setRole: (role: Role) => void;
+  clearRole: () => void;
   isLoading: boolean;
 }
 
@@ -34,8 +35,13 @@ export function RoleProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const clearRole = () => {
+    setRoleState(null);
+    localStorage.removeItem('selected_role');
+  };
+
   return (
-    <RoleContext.Provider value={{ role, setRole, isLoading }}>
+    <RoleContext.Provider value={{ role, setRole, clearRole, isLoading }}>
       {children}
     </RoleContext.Provider>
   );

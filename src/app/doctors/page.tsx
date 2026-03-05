@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { doctorService } from "@/services/doctor.service";
 import { useSocket } from "@/context/SocketContext";
 import DoctorCard from "@/components/features/DoctorCard";
@@ -11,13 +11,26 @@ import { Search, Loader2 } from "lucide-react";
 
 export default function DoctorsPage() {
   const [doctors, setDoctors] = useState<Doctor[]>([]);
+  const [allDoctors, setAllDoctors] = useState<Doctor[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
-  const { socket } = useSocket();
+  const { socket, onlineUsers } = useSocket();
 
-  // Categories requested by the user
-  const categories = ["All", "Cardiologist", "Dentist", "Neurologist", "Pediatrician", "Surgeon"];
+  // Dynamic categories derived from all registered doctors
+  const categories = useMemo(() => {
+    const specs = Array.from(
+      new Set(allDoctors.map(d => d.specialization).filter(Boolean))
+    ).sort();
+    return ["All", ...specs];
+  }, [allDoctors]);
+
+  // Fetch ALL doctors once on mount to build category list
+  useEffect(() => {
+    doctorService.getAllDoctors({}).then(data => {
+      setAllDoctors(data || []);
+    }).catch(() => null);
+  }, []);
 
   const fetchDoctors = async () => {
     setLoading(true);
@@ -54,27 +67,26 @@ export default function DoctorsPage() {
         );
     };
 
-    socket.on('doctor_rating_updated', handleRatingUpdate);
-    socket.on('doctor_profile_updated', (data: { doctorId: string, fees: number }) => {
+    const handleProfileUpdated = (data: { doctorId: string, fees: number, specialization?: string }) => {
         setDoctors(prevDoctors => 
             prevDoctors.map(doc => 
                 doc._id === data.doctorId 
-                    ? { ...doc, fees: data.fees }
+                    ? { ...doc, fees: data.fees, specialization: data.specialization || doc.specialization }
                     : doc
             )
         );
-    });
+        // Refresh all doctors list to update dynamic categories
+        doctorService.getAllDoctors({}).then(data => setAllDoctors(data || [])).catch(() => null);
+    };
+
+    socket.on('doctor_rating_updated', handleRatingUpdate);
+    socket.on('doctor_profile_updated', handleProfileUpdated);
 
     return () => {
         socket.off('doctor_rating_updated', handleRatingUpdate);
-        socket.off('doctor_profile_updated');
+        socket.off('doctor_profile_updated', handleProfileUpdated);
     };
   }, [socket]);
-
-  const handleSearch = (e: React.FormEvent) => {
-      e.preventDefault();
-      fetchDoctors();
-  };
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] pb-20 font-sans">
@@ -108,7 +120,7 @@ export default function DoctorsPage() {
                 </div>
             </div>
 
-            {/* Categorical Filter Tags */}
+            {/* Dynamic Specialization Filter Tags */}
             <div className="flex flex-wrap justify-center gap-3 max-w-3xl mx-auto">
                 {categories.map((tag) => (
                     <button
@@ -133,7 +145,6 @@ export default function DoctorsPage() {
                 <h2 className="text-3xl font-bold text-slate-800 font-serif">Available Specialists</h2>
                 <p className="text-slate-400 font-medium mt-1">Found {doctors.length} results matching your search</p>
             </div>
-            {/* Sorting or Filter Toggle can go here */}
         </div>
 
         {loading ? (
@@ -153,7 +164,7 @@ export default function DoctorsPage() {
                         <p className="text-slate-400 max-w-sm mx-auto">We couldn't find any specialists matching "{searchQuery}". Try adjusting your filters or search keywords.</p>
                         <Button 
                             variant="ghost" 
-                            onClick={() => setSearchQuery("")}
+                            onClick={() => { setSearchQuery(""); setActiveCategory("All"); }}
                             className="mt-8 text-[#70c0fa] font-bold hover:bg-blue-50 rounded-xl"
                         >
                             Reset Search

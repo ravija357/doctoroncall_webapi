@@ -13,6 +13,7 @@ export interface ChatContact {
     name: string;
     image?: string;
     lastMessage?: string;
+    lastMessageTime?: string; // ISO string for sorting
     unread?: number;
     isOnline?: boolean;
     role?: string;

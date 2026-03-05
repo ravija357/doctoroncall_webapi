@@ -19,8 +19,10 @@ export default function AuthSidebar({
   return (
     <div className={`absolute inset-0 h-full w-full ${bgClassName} overflow-hidden`}>
       {/* Dynamic Brand Pattern */}
-      <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(255,255,255,0.15) 1px, transparent 0)', backgroundSize: '32px 32px' }} />
-      <div className="absolute inset-0 bg-gradient-to-br from-primary-hover/40 to-slate-950/90 mix-blend-multiply" />
+      <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(255,255,255,0.4) 1px, transparent 0)', backgroundSize: '32px 32px' }} />
+      <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary-hover to-primary mix-blend-multiply opacity-60" />
+      <div className="absolute top-0 right-0 -mr-20 -mt-20 w-[400px] h-[400px] bg-white/20 rounded-full blur-[100px] animate-pulse" />
+      <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-[300px] h-[300px] bg-primary-light/30 rounded-full blur-[80px] animate-pulse" style={{ animationDelay: '1s' }} />
       
       <div className="absolute inset-0 flex flex-col justify-center px-12 text-white z-10">
         <div className="mb-12">

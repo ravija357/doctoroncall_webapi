@@ -19,21 +19,18 @@ export default function RegisterPage() {
       reverse
       sidebar={
         <AuthSidebar
-          title="Join the future of digital healthcare."
+          title="Join the digital health revolution."
           badgeContent={
             <>
               <ShieldCheck className="h-4 w-4 text-white" />
-              HIPAA Compliant Security
+              <span className="text-white">HIPAA Secure Cloud</span>
             </>
           }
           footer={undefined}
         >
-          <p className="text-xl text-slate-300 leading-relaxed font-medium mb-4">
-            Whether you're a provider or a patient, we offer the tools you need for a better care experience.
-          </p>
-          <div className="grid grid-cols-2 gap-8">
-            <BenefitBox icon={<Users className="text-primary-light" />} title="Patients" desc="Verified specialists in one click." />
-            <BenefitBox icon={<Activity className="text-primary-light" />} title="Doctors" desc="Manage appointments seamlessly." />
+          <div className="grid grid-cols-2 gap-4 mr-8">
+            <BenefitBox icon={<Users className="text-primary w-5 h-5" />} title="Patients" desc="Verified specialists in one click." />
+            <BenefitBox icon={<Activity className="text-primary w-5 h-5" />} title="Doctors" desc="Manage appointments seamlessly." />
           </div>
         </AuthSidebar>
       }

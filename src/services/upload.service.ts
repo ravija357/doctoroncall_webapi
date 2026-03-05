@@ -1,6 +1,7 @@
 import axios from 'axios';
+import api from './api';
 
-const API_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001') + '/upload';
+const API_URL = `${api.defaults.baseURL?.replace('/api', '')}/upload`;
 
 export const uploadService = {
     uploadFile: async (file: File): Promise<string> => {
@@ -15,7 +16,7 @@ export const uploadService = {
         });
 
         if (response.data.success) {
-            const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+            const baseUrl = api.defaults.baseURL?.replace('/api', '') || 'http://localhost:3001';
             return `${baseUrl}${response.data.path}`;
         } else {
             throw new Error(response.data.message || 'Upload failed');

@@ -8,7 +8,7 @@ interface SocketContextType {
     socket: Socket | null;
     onlineUsers: string[];
     isConnected: boolean;
-    call: { isReceivingCall: boolean; from: string; name: string; signal: any; callType: 'video' | 'audio' } | null;
+    call: { isReceivingCall: boolean; from: string; name: string; signal: any; callType: 'video' | 'audio'; remoteUserId?: string } | null;
     callAccepted: boolean;
     callEnded: boolean;
     jitsiRoom: string | null;
@@ -43,7 +43,7 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
     
     // Call State
     const [me, setMe] = useState('');
-    const [call, setCall] = useState<{ isReceivingCall: boolean; from: string; name: string; signal: any; callType: 'video' | 'audio' } | null>(null);
+    const [call, setCall] = useState<{ isReceivingCall: boolean; from: string; name: string; signal: any; callType: 'video' | 'audio'; remoteUserId?: string } | null>(null);
     const [callAccepted, setCallAccepted] = useState(false);
     const [callEnded, setCallEnded] = useState(false);
     const [jitsiRoom, setJitsiRoom] = useState<string | null>(null);
@@ -52,7 +52,17 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
 
     useEffect(() => {
         if (user) {
-            const socketUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+            // Re-detect the API URL to be safe, especially in dev when switching networks
+            let socketUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+            if (typeof window !== 'undefined') {
+                const hostname = window.location.hostname;
+                if (hostname !== 'localhost' && hostname !== '127.0.0.1' && socketUrl.includes('localhost')) {
+                    socketUrl = `http://${hostname}:3001`;
+                } else if ((hostname === 'localhost' || hostname === '127.0.0.1') && !socketUrl.includes('localhost')) {
+                    socketUrl = 'http://localhost:3001';
+                }
+            }
+
             const newSocket = io(socketUrl, {
                 auth: { userId: user._id },
                 withCredentials: true,
@@ -70,7 +80,20 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
             });
 
             newSocket.on('user_online', (data: { userId: string }) => {
-                 setOnlineUsers(prev => [...prev, data.userId]);
+                setOnlineUsers(prev => {
+                    if (prev.includes(data.userId)) return prev;
+                    return [...prev, data.userId];
+                });
+            });
+
+            // Remove from online list when they disconnect / log out
+            newSocket.on('user_offline', (data: { userId: string }) => {
+                setOnlineUsers(prev => prev.filter(id => id !== data.userId));
+            });
+
+            // Receive full list of online users on initial connect
+            newSocket.on('online_users_list', (userIds: string[]) => {
+                setOnlineUsers(userIds);
             });
 
             newSocket.on('call_accepted', (signal) => {
@@ -81,7 +104,7 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
 
             newSocket.on('call_user', (data: { from: string; name: string; signal: any; callType: 'video' | 'audio' }) => {
                 console.log('[CALL] Incoming call from:', data.name);
-                setCall({ isReceivingCall: true, from: data.from, name: data.name, signal: data.signal, callType: data.callType || 'video' });
+                setCall({ isReceivingCall: true, from: data.from, name: data.name, signal: data.signal, callType: data.callType || 'video', remoteUserId: data.from });
             });
 
             newSocket.on('profile_sync', (data: any) => {
@@ -109,7 +132,7 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
     const callUser = (id: string, callType: 'video' | 'audio' = 'video') => {
         const roomName = `doc-call-${user?._id}-${Date.now()}`;
         setJitsiRoom(roomName);
-        setCall({ isReceivingCall: false, from: me, name: 'Calling...', signal: { type: 'jitsi_invite', roomName }, callType });
+        setCall({ isReceivingCall: false, from: me, name: 'Calling...', signal: { type: 'jitsi_invite', roomName }, callType, remoteUserId: id });
         
         socket?.emit('call_user', {
             userToCall: id,

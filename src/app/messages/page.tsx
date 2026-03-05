@@ -10,6 +10,8 @@ import { ChatWindow } from '@/components/chat/ChatWindow';
 import { JitsiCallModal } from '@/components/chat/JitsiCallModal';
 import { IncomingCallModal } from '@/components/chat/IncomingCallModal';
 import { Send } from 'lucide-react';
+import api from '@/services/api';
+import { getImageUrl } from '@/utils/imageHelper';
 
 function MessagesContent() {
     // 1. Core Hooks
@@ -46,19 +48,53 @@ function MessagesContent() {
     const autoCall = searchParams.get('autoCall');
 
     useEffect(() => {
-        if (autoUserId && contacts.length > 0 && !activeContact) {
+        if (!autoUserId || activeContact) return;
+
+        // Step 1: Try to find in already-loaded contacts
+        if (contacts.length > 0) {
             const targetContact = contacts.find(c => c.id === autoUserId);
             if (targetContact) {
                 setActiveContact(targetContact);
                 if (autoCall === 'true') {
                     setTimeout(() => {
-                        console.log("Auto-starting call with:", targetContact.name);
                         setIsCalling(true);
                         callUser(targetContact.id, 'video');
                     }, 1000);
                 }
+                return;
             }
         }
+
+        // Step 2: Contact not found (first-ever chat) — fetch user info from backend
+        // and create a synthetic contact so the chat opens immediately
+        const fetchAndOpenContact = async () => {
+            try {
+                const res = await api.get(`/auth/user/${autoUserId}`);
+                const u = res.data?.user || res.data?.data;
+                if (!u) return;
+
+                const syntheticContact = {
+                    id: u._id,
+                    name: u.role === 'doctor'
+                        ? `Dr. ${u.firstName} ${u.lastName}`
+                        : `${u.firstName} ${u.lastName}`,
+                    image: getImageUrl(u.image, u._id),
+                    role: u.role,
+                    isOnline: false,
+                    unread: 0,
+                };
+
+                // Add to contacts so the sidebar shows them
+                setActiveContact(syntheticContact as any);
+            } catch (err) {
+                console.error('[MessagesPage] Could not fetch user for auto-open:', err);
+            }
+        };
+
+        // Wait until contacts have been fetched once before running fallback
+        // (give the contacts fetch time to complete, but fallback if user is still not found)
+        const timer = setTimeout(fetchAndOpenContact, 800);
+        return () => clearTimeout(timer);
     }, [autoUserId, contacts, autoCall, activeContact, callUser, setActiveContact]);
 
     // Cleanup when call ends
@@ -78,7 +114,11 @@ function MessagesContent() {
 
     const handleLeaveCall = () => {
         setIsCalling(false);
+        const contactId = call?.remoteUserId || activeContact?.id;
         leaveCall();
+        if (contactId) {
+            sendMessage('Call Ended 📞', 'text', contactId);
+        }
     };
 
     if (!user) return null;

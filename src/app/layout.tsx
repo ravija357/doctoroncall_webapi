@@ -30,11 +30,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={inter.className}>
+    <html lang="en" suppressHydrationWarning>
+      <body className={inter.className} suppressHydrationWarning>
         <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ""}>
-          <AuthProvider>
-            <RoleProvider>
+          <RoleProvider>
+            <AuthProvider>
                 <SocketProvider>
                     <NotificationProvider>
                         <DarkModeProvider>
@@ -48,8 +48,8 @@ export default function RootLayout({
                         </DarkModeProvider>
                     </NotificationProvider>
                 </SocketProvider>
-            </RoleProvider>
-          </AuthProvider>
+            </AuthProvider>
+          </RoleProvider>
         </GoogleOAuthProvider>
       </body>
     </html>
