@@ -3,13 +3,11 @@
 import { useState } from "react";
 
 import Link from "next/link";
-import { Loader2, Star, CheckCircle2, MessageSquare, Calendar, Shield, Activity } from "lucide-react";
+import { Loader2, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import AuthLayout from "@/components/auth/AuthLayout";
-import AuthSidebar from "@/components/auth/AuthSidebar";
-import BenefitBox from "@/components/auth/BenefitBox";
 
 import { useLoginForm } from "@/hooks/useLoginForm";
 import { useGoogleLogin } from '@react-oauth/google';
@@ -65,39 +63,56 @@ export default function LoginPage() {
   return (
     <AuthLayout
       sidebar={
-        <AuthSidebar
-          title="Empowering Health Through Innovation"
-          badgeContent={
-            <>
-              <Star className="h-4 w-4 fill-white text-white" />
-              <span className="text-white">Modern Care Network</span>
-            </>
-          }
-          footer={undefined}
-        >
-          <div className="grid grid-cols-2 gap-4 mr-8">
-            <BenefitBox 
-              icon={<Calendar className="text-primary w-5 h-5" />} 
-              title="Smart Booking" 
-              desc="Instant access to doctors" 
-            />
-            <BenefitBox 
-              icon={<Shield className="text-primary w-5 h-5" />} 
-              title="Secure Vault" 
-              desc="Encrypted health records" 
-            />
-            <BenefitBox 
-              icon={<Activity className="text-primary w-5 h-5" />} 
-              title="Live Care" 
-              desc="Real-time monitoring" 
-            />
-            <BenefitBox 
-              icon={<MessageSquare className="text-primary w-5 h-5" />} 
-              title="24/7 Expert" 
-              desc="Always-on assistance" 
-            />
+        <div className="absolute inset-0 h-full w-full bg-[#0a192f] overflow-hidden flex items-center justify-center group">
+          {/* Deep premium background with sleek gradient */}
+          <div className="absolute inset-0 bg-gradient-to-br from-primary-hover via-primary to-[#0f2a4a] opacity-95" />
+          
+          {/* Subtle micro-grid pattern for modern feel */}
+          <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', backgroundSize: '32px 32px' }} />
+          
+          {/* Elegant ambient light orbs with smooth pulsing */}
+          <div className="absolute -top-[10%] -right-[10%] w-[60%] h-[60%] rounded-full bg-primary-light/40 blur-[140px] mix-blend-screen animate-pulse duration-[8000ms]" />
+          <div className="absolute -bottom-[10%] -left-[10%] w-[70%] h-[70%] rounded-full bg-blue-400/30 blur-[150px] mix-blend-screen animate-pulse duration-[12000ms] delay-1000" />
+          
+          {/* Main Logo Container */}
+          <div className="relative z-10 flex flex-col items-center justify-center px-12 transition-transform duration-1000 ease-out group-hover:scale-[1.02]">
+            {/* Dynamic glow behind the glass card */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-white/10 blur-[100px] rounded-full opacity-60 group-hover:bg-white/20 transition-all duration-1000 ease-in-out" />
+            
+            {/* Ultra-premium glassmorphism card - made light to show the original dark logo clearly */}
+            <div className="relative bg-white/90 backdrop-blur-[40px] p-20 rounded-[4rem] border border-white/50 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.5)] flex items-center justify-center overflow-hidden hover:bg-white hover:border-white hover:shadow-[0_40px_80px_-20px_rgba(0,0,0,0.6)] transition-all duration-700 ease-in-out transform group-hover:-translate-y-2">
+              
+              {/* Subtle glass reflections */}
+              <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white to-transparent opacity-80" />
+              <div className="absolute inset-y-0 left-0 w-px bg-gradient-to-b from-white to-transparent opacity-50" />
+              
+              <img 
+                src="/doctoroncall-log.png" 
+                alt="DoctorOnCall Logo" 
+                className="relative z-10 h-32 w-auto object-contain drop-shadow-sm transform group-hover:scale-105 transition-transform duration-700 ease-[cubic-bezier(0.34,1.56,0.64,1)]"
+              />
+            </div>
+            
+            {/* High-End Typography Elements */}
+            <div className="mt-14 flex flex-col items-center max-w-sm text-center transform group-hover:-translate-y-2 transition-transform duration-700 ease-out delay-100">
+              <h2 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-br from-white via-white/90 to-white/40 mb-4 tracking-tight">
+                The Future of Care.
+              </h2>
+              <p className="text-white/60 text-sm leading-relaxed font-medium">
+                Experience seamless healthcare connectivity with our state-of-the-art secure network. Welcome back to <span className="text-white/90 font-bold">doctoroncall</span>.
+              </p>
+            </div>
+            
+            {/* Minimalist Accents (Kept subtle for balance) */}
+            <div className="mt-12 flex flex-col items-center opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all duration-700 ease-in-out delay-300">
+              <div className="flex items-center gap-4">
+                <span className="w-12 h-[1px] bg-gradient-to-r from-transparent to-white/40" />
+                <span className="text-primary-light/80 text-[10px] font-bold tracking-[0.5em] uppercase">Secure Portal</span>
+                <span className="w-12 h-[1px] bg-gradient-to-l from-transparent to-white/40" />
+              </div>
+            </div>
           </div>
-        </AuthSidebar>
+        </div>
       }
     >
       <div className="mb-8">
@@ -152,9 +167,25 @@ export default function LoginPage() {
             {isLoading ? (
               <Loader2 className="h-5 w-5 animate-spin" />
             ) : (
-              "Sign In"
+              `Sign In${currentRole === 'admin' ? ' as Admin' : ''}`
             )}
           </Button>
+
+          {/* Admin login toggle */}
+          <div className="flex justify-center">
+            <button
+              type="button"
+              onClick={() => form.setValue('role', currentRole === 'admin' ? 'user' : 'admin')}
+              className={`inline-flex items-center gap-1.5 text-xs font-bold transition-all rounded-full px-3 py-1.5 ${
+                currentRole === 'admin'
+                  ? 'bg-slate-900 text-white'
+                  : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'
+              }`}
+            >
+              <Shield className="w-3 h-3" />
+              {currentRole === 'admin' ? 'Admin Mode Active — switch back' : 'Sign in as Admin'}
+            </button>
+          </div>
         </form>
 
         <div className="mt-8">

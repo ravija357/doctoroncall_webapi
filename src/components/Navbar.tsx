@@ -7,7 +7,7 @@ import { useNotifications } from "@/context/NotificationContext";
 import { useRole } from "@/context/RoleContext";
 import { useState } from "react";
 import { Button } from "./ui/button";
-import { User, LogOut, ChevronDown, Menu, LayoutDashboard, Calendar, Users, MessageSquare, Bell, Search, Clock, Stethoscope, FileText, Pill, History, UserCog, HeartPulse, Sun, Moon } from "lucide-react";
+import { User, LogOut, ChevronDown, Menu, LayoutDashboard, Calendar, Users, MessageSquare, Bell, Search, Clock, Stethoscope, FileText, Pill, History, UserCog, HeartPulse, Sun, Moon, Shield } from "lucide-react";
 import { useDarkMode } from "@/context/DarkModeContext";
 import { getImageUrl } from "@/utils/imageHelper";
 import { useEffect, useRef } from "react";
@@ -35,6 +35,13 @@ const PATIENT_FEATURES = [
   { name: 'Account Profile', route: '/user/profile', icon: User },
 ];
 
+const ADMIN_FEATURES = [
+  { name: 'Command Center', route: '/admin', icon: Shield },
+  { name: 'User Manager', route: '/admin/users', icon: Users },
+  { name: 'System Logs', route: '#', icon: FileText },
+  { name: 'Messages', route: '/admin/messages', icon: MessageSquare },
+];
+
 export default function Navbar() {
   const { user, logout, isAuthenticated } = useAuth();
   const { role: storedRole } = useRole();
@@ -58,7 +65,8 @@ export default function Navbar() {
   }, []);
 
   // Use user.role if available (authenticated), otherwise fallback to storedRole for optimistic UI
-  const isDoctor = user ? user.role === 'doctor' : storedRole === 'doctor';
+  const isDoctor = user ? user.role === 'doctor' : (storedRole as string) === 'doctor';
+  const isAdmin = user ? user.role === 'admin' : (storedRole as string) === 'admin';
 
   const handleFeatureClick = (route: string) => {
       if (!isAuthenticated) {
@@ -71,7 +79,7 @@ export default function Navbar() {
   };
 
   // Feature filtering
-  const features = isDoctor ? DOCTOR_FEATURES : PATIENT_FEATURES;
+  const features = isAdmin ? ADMIN_FEATURES : isDoctor ? DOCTOR_FEATURES : PATIENT_FEATURES;
   const filteredFeatures = searchQuery 
     ? features.filter(f => f.name.toLowerCase().includes(searchQuery.toLowerCase()))
     : [];
@@ -106,11 +114,11 @@ export default function Navbar() {
     }
   };
 
-  // Theme Config - Standardizing to the new primary color for all users
+  // Theme Config - Standardizing to a high-contrast light theme
   const theme = {
-    accent: "text-primary",
-    bg: "bg-primary-light/10",
-    border: "border-primary-light/20",
+    accent: isAdmin ? "text-primary" : "text-primary",
+    bg: isAdmin ? "bg-primary/5" : "bg-primary-light/10",
+    border: isAdmin ? "border-slate-200" : "border-primary-light/20",
     button: "bg-primary hover:bg-primary-hover shadow-primary/30",
     hoverText: "hover:text-primary",
     ring: "focus:ring-primary",
@@ -129,12 +137,19 @@ export default function Navbar() {
                 className="h-12 w-auto object-contain"
              />
              {isDoctor && <span className="px-2 py-0.5 rounded-md bg-primary-light/10 text-primary text-[10px] font-bold uppercase tracking-wider border border-primary/20">Doctor Portal</span>}
+             {isAdmin && <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-800 text-[10px] font-bold uppercase tracking-wider border border-slate-200">Admin Control</span>}
           </div>
         </Link>
 
         {/* Desktop Links */}
         <div className="hidden items-center gap-8 lg:flex">
-          {isDoctor ? (
+          {isAdmin ? (
+            <>
+                <NavLink href="/admin" theme={theme}>Command Center</NavLink>
+                <NavLink href="/admin/users" theme={theme}>User Manager</NavLink>
+                <NavLink href="/admin/messages" theme={theme} badge={unreadCount}>Messages</NavLink>
+            </>
+          ) : isDoctor ? (
             <>
                 <NavLink href="/doctor/dashboard" theme={theme}>Dashboard</NavLink>
                 <NavLink href="/my-patients" theme={theme}>My Patients</NavLink>
@@ -158,7 +173,7 @@ export default function Navbar() {
                 <Search className={`w-4 h-4 transition-colors ${showResults ? 'text-[#70c0fa]' : 'text-slate-400'}`} />
                 <input 
                     type="text" 
-                    placeholder={isDoctor ? "Search features..." : "Search doctors or tools..."} 
+                    placeholder={isAdmin ? "Search administration..." : isDoctor ? "Search features..." : "Search doctors or tools..."} 
                     className="bg-transparent border-none outline-none text-sm w-full text-slate-700 placeholder:text-slate-300 font-medium"
                     value={searchQuery}
                     onChange={(e) => {
@@ -302,7 +317,7 @@ function NavLink({ href, children, theme, badge, authRequired = false }: { href:
   const pathname = usePathname();
   const router = useRouter();
   const { isAuthenticated } = useAuth();
-  const isActive = pathname === href || pathname.startsWith(href + '/');
+  const isActive = pathname === href || (href !== '/' && pathname.startsWith(href + '/'));
 
   const handleClick = (e: React.MouseEvent) => {
       if (authRequired && !isAuthenticated) {
@@ -315,20 +330,24 @@ function NavLink({ href, children, theme, badge, authRequired = false }: { href:
     <Link
       href={href}
       onClick={handleClick}
-      className={`text-sm font-bold transition-colors relative group flex items-center gap-1 ${
-        isActive ? 'text-primary' : `text-gray-500 ${theme.hoverText}`
+      className={`relative text-sm font-bold transition-colors duration-200 flex items-center gap-1.5 group ${
+        isActive
+          ? 'text-primary'
+          : 'text-slate-500 hover:text-slate-900'
       }`}
     >
       {children}
       {badge && badge > 0 ? (
-          <span className="flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white ring-2 ring-white animate-pulse">
+          <span className="flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white ring-2 ring-white">
               {badge > 9 ? '9+' : badge}
           </span>
       ) : null}
-      {/* active indicator */}
+      {/* Underline indicator — active stays solid, hover fades in */}
       <span
-        className={`absolute -bottom-1 left-0 h-0.5 bg-primary rounded-full transition-all duration-300 ${
-          isActive ? 'w-full opacity-100' : 'w-0 opacity-0 group-hover:w-full group-hover:opacity-50'
+        className={`absolute -bottom-1 left-0 right-0 h-[2px] rounded-full transition-all duration-300 origin-left ${
+          isActive
+            ? 'bg-primary scale-x-100 opacity-100'
+            : 'bg-primary/40 scale-x-0 opacity-0 group-hover:scale-x-100 group-hover:opacity-100'
         }`}
       />
     </Link>

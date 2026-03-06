@@ -3,6 +3,14 @@ export interface User {
     email: string;
     role: 'user' | 'doctor' | 'admin';
     image?: string;
+    phone?: string;
+    bio?: string;
+    address?: string;
+    preferences?: {
+        darkMode: boolean;
+        notifications: boolean;
+        newsletter: boolean;
+    };
     firstName?: string;
     lastName?: string;
     createdAt?: string;

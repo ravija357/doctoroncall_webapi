@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -8,7 +8,7 @@ import { useRole } from "@/context/RoleContext";
 const loginSchema = z.object({
     email: z.string().email("Invalid email address"),
     password: z.string().min(6, "Password must be at least 6 characters"),
-    role: z.enum(["user", "doctor"]),
+    role: z.enum(["user", "doctor", "admin"]),
 });
 
 export type LoginFormValues = z.infer<typeof loginSchema>;
@@ -22,16 +22,21 @@ export function useLoginForm() {
     const form = useForm<LoginFormValues>({
         resolver: zodResolver(loginSchema),
         defaultValues: {
-            role: contextRole === 'doctor' ? 'doctor' : 'user'
+            role: contextRole === 'doctor' ? 'doctor' : contextRole === 'admin' ? 'admin' : 'user'
         }
     });
 
     const currentRole = form.watch("role");
 
-    // Sync form with context if context changes (e.g. if they somehow switch contexts?)
+    const hasSynced = useRef(false);
+
+    // Sync role from context on first render only.
+    // Using a ref guard so the dep array stays stable and never overrides
+    // a manually chosen admin role.
     useEffect(() => {
-        if (contextRole) {
+        if (!hasSynced.current && contextRole && form.getValues('role') !== 'admin') {
             form.setValue('role', contextRole === 'doctor' ? 'doctor' : 'user');
+            hasSynced.current = true;
         }
     }, [contextRole, form]);
 

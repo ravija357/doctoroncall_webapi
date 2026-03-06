@@ -364,14 +364,14 @@ function AppointmentCard({ appointment, onDelete, onCancel, onRate }: { appointm
                         <Link href={`/doctors/${appointment.doctor._id}`} className="flex gap-4 group/doctor cursor-pointer">
                             <div className="w-14 h-14 rounded-2xl bg-slate-100 overflow-hidden ring-offset-2 transition-all group-hover/doctor:ring-2 ring-blue-400">
                                 <img 
-                                    src={getImageUrl(appointment.doctor.user.image, appointment.doctor._id, appointment.doctor.user.updatedAt)} 
+                                    src={getImageUrl(appointment.doctor.user?.image, appointment.doctor._id, appointment.doctor.user?.updatedAt)} 
                                     alt="Doctor" 
                                     className="w-full h-full object-cover transition-transform group-hover/doctor:scale-110"
                                 />
                             </div>
                             <div>
                                 <h3 className="font-bold text-lg text-slate-800 group-hover/doctor:text-blue-600 transition-colors">
-                                    Dr. {appointment.doctor.user.firstName} {appointment.doctor.user.lastName}
+                                    Dr. {appointment.doctor.user?.firstName || "Unknown"} {appointment.doctor.user?.lastName || "Doctor"}
                                 </h3>
                                 <div className="flex items-center gap-2 text-sm text-slate-500 font-medium">
                                     <Stethoscope className="w-4 h-4 text-blue-400" />

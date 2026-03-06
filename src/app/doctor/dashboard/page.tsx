@@ -106,12 +106,12 @@ function ScheduleRow({ appt, onStatus }: { appt: Appointment; onStatus: (id: str
 
       {/* avatar */}
       <div className="w-10 h-10 rounded-xl bg-slate-100 overflow-hidden ring-2 ring-white flex-shrink-0">
-        <img src={getImageUrl(appt.patient.image, appt.patient._id)} alt="Patient" className="w-full h-full object-cover" />
+        <img src={getImageUrl(appt.patient?.image, appt.patient?._id)} alt="Patient" className="w-full h-full object-cover" />
       </div>
 
       {/* info */}
       <div className="flex-1 min-w-0">
-        <p className="font-bold text-slate-900 truncate">{appt.patient.firstName} {appt.patient.lastName}</p>
+        <p className="font-bold text-slate-900 truncate">{appt.patient?.firstName || "Unknown"} {appt.patient?.lastName || "Patient"}</p>
         <p className="text-xs text-slate-400 truncate">{appt.reason || "Routine Checkup"}</p>
       </div>
 
@@ -178,7 +178,7 @@ export default function DoctorDashboard() {
       if (profile) setDoctorProfile(profile);
       if (appts) {
         setAppointments(appts);
-        const uniquePatients = new Set(appts.map((a) => a.patient._id)).size;
+        const uniquePatients = new Set(appts.filter((a) => a.patient).map((a) => a.patient._id)).size;
         const localTodayStr = new Date().toLocaleDateString("en-CA");
         const todayCount = appts.filter((a) => new Date(a.date).toLocaleDateString("en-CA") === localTodayStr).length;
         const revenue = appts.filter((a) => a.status === "completed" || a.status === "confirmed").length * (profile?.fees || 0);
@@ -252,7 +252,13 @@ export default function DoctorDashboard() {
     } catch { toast.error("Failed to update"); fetchData(); }
   };
 
-  if (!user) return null;
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#F8FAFD]">
+        <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
 
   const localTodayStr = new Date().toLocaleDateString("en-CA");
   const todayAppts = appointments
@@ -416,9 +422,9 @@ export default function DoctorDashboard() {
                             <td className="py-4 pl-1">
                               <div className="flex items-center gap-3">
                                 <div className="w-9 h-9 rounded-xl bg-slate-100 overflow-hidden ring-2 ring-white flex-shrink-0">
-                                  <img src={getImageUrl(appt.patient.image, appt.patient._id)} className="w-full h-full object-cover" alt="" />
+                                  <img src={getImageUrl(appt.patient?.image, appt.patient?._id)} className="w-full h-full object-cover" alt="" />
                                 </div>
-                                <span className="font-bold text-slate-800">{appt.patient.firstName} {appt.patient.lastName}</span>
+                                <span className="font-bold text-slate-800">{appt.patient?.firstName || "Unknown"} {appt.patient?.lastName || "Patient"}</span>
                               </div>
                             </td>
                             <td className="py-4 text-slate-500 font-medium whitespace-nowrap">

@@ -267,6 +267,7 @@ export default function MyPatientsPage() {
 
         const patientMap = new Map<string, Patient>();
         appointments.forEach((app) => {
+          if (!app.patient) return;
           const pid = app.patient._id;
           if (!patientMap.has(pid)) {
             patientMap.set(pid, { ...app.patient, lastAppointment: app.date, totalVisits: 1 });

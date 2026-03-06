@@ -19,11 +19,11 @@ export default function DoctorCard({ doctor }: DoctorCardProps) {
           <div className="flex justify-between items-start mb-6">
             <div className="relative">
               <div className="h-24 w-24 overflow-hidden rounded-[2rem] border-4 border-slate-50 bg-slate-100 shadow-inner">
-                {doctor.user.image ? (
+                {doctor.user?.image ? (
                   <img src={getImageUrl(doctor.user.image, doctor.user._id, doctor.user.updatedAt)} alt="Doctor" className="h-full w-full object-cover" />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center bg-slate-200 text-3xl font-bold text-slate-400">
-                    {doctor.user.firstName?.[0] || 'D'}
+                    {doctor.user?.firstName?.[0] || 'D'}
                   </div>
                 )}
               </div>
@@ -40,9 +40,9 @@ export default function DoctorCard({ doctor }: DoctorCardProps) {
           </div>
           
           {/* Info */}
-          <div className="mb-6">
+          <div className="mb-6 z-20 relative">
             <h3 className="text-2xl font-bold text-slate-800 font-serif group-hover:text-[#70c0fa] transition-colors duration-300">
-              Dr. {doctor.user.firstName} {doctor.user.lastName}
+              Dr. {doctor.user?.firstName || "Unknown"} {doctor.user?.lastName || "Doctor"}
             </h3>
             <p className="text-sm font-black text-[#70c0fa] uppercase tracking-widest mt-1 opacity-80">{doctor.specialization}</p>
           </div>

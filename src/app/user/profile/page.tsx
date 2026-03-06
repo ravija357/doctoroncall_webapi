@@ -15,6 +15,7 @@ import { doctorService } from "@/services/doctor.service";
 import { Doctor } from "@/types";
 import { toast } from "sonner";
 import api from "@/services/api";
+import PageBackground from '@/components/ui/PageBackground';
 
 /* ─── animation helpers ─────────────────────────── */
 const ease = [0.16, 1, 0.3, 1] as const;
@@ -275,7 +276,8 @@ export default function UserProfilePage() {
       };
 
       if (doctorProfile) {
-        await doctorService.updateProfile(payload);
+        const updated = await doctorService.updateProfile(payload);
+        setDoctorProfile(updated);
       } else {
         // Create new profile via the api service (handles auth cookies)
         await api.post('/doctors/profile', payload);
@@ -311,19 +313,23 @@ export default function UserProfilePage() {
 
   return (
     <AuthGuard>
-      <div className="min-h-screen bg-[#F8FAFD] pb-20 font-sans">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      <div className="min-h-screen bg-slate-50 pb-20 font-sans relative overflow-hidden">
+        {/* Pure Light Gradient */}
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-white to-primary/5 pointer-events-none" />
+        <PageBackground />
+
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 pt-24">
 
           {/* ── Header ── */}
-          <motion.div className="mb-10" initial="hidden" animate="visible" variants={stagger}>
-            <motion.p variants={fadeUp} className="text-xs font-bold text-primary uppercase tracking-widest mb-1">
+          <motion.div className="mb-12" initial="hidden" animate="visible" variants={stagger}>
+            <motion.p variants={fadeUp} className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-2">
               Account Settings
             </motion.p>
-            <motion.h1 variants={fadeUp} custom={0.05} className="text-3xl font-black text-slate-900 tracking-tight">
-              My Profile
+            <motion.h1 variants={fadeUp} custom={0.05} className="text-5xl font-black text-slate-900 tracking-tight">
+              My Profile.
             </motion.h1>
-            <motion.p variants={fadeUp} custom={0.1} className="text-slate-400 mt-1 text-sm">
-              Manage your personal information and preferences.
+            <motion.p variants={fadeUp} custom={0.1} className="text-slate-400 mt-2 text-sm font-medium">
+              Manage your personal intelligence and system preferences.
             </motion.p>
           </motion.div>
 
@@ -336,7 +342,7 @@ export default function UserProfilePage() {
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8, ease, delay: 0.2 }}
             >
-              <div className="bg-white rounded-[2.5rem] p-8 border border-primary/15 shadow-lg shadow-primary/8 relative overflow-hidden sticky top-6">
+              <div className="bg-white rounded-[2.5rem] p-8 border border-slate-200 shadow-2xl relative overflow-hidden sticky top-6">
                 {/* Decorative blobs */}
                 <div className="absolute -top-10 -right-10 w-36 h-36 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
                 <div className="absolute -bottom-10 -left-10 w-36 h-36 bg-violet-100/60 rounded-full blur-3xl pointer-events-none" />
@@ -400,7 +406,7 @@ export default function UserProfilePage() {
 
               {/* Personal info form */}
               <motion.div
-                className="bg-white rounded-[2rem] p-8 border border-slate-100 shadow-sm"
+                className="bg-white rounded-[2rem] p-8 border border-slate-200 shadow-xl"
                 initial={{ opacity: 0, y: 24 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, ease, delay: 0.25 }}
@@ -606,7 +612,7 @@ export default function UserProfilePage() {
 
               {/* Preferences */}
               <motion.div
-                className="bg-white rounded-[2rem] p-8 border border-slate-100 shadow-sm"
+                className="bg-white rounded-[2rem] p-8 border border-slate-200 shadow-xl"
                 initial={{ opacity: 0, y: 24 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, ease, delay: 0.35 }}
@@ -650,7 +656,7 @@ export default function UserProfilePage() {
 
               {/* Danger zone */}
               <motion.div
-                className="bg-white rounded-[2rem] p-8 border border-red-100 shadow-sm"
+                className="bg-white rounded-[2rem] p-8 border border-red-100 shadow-xl"
                 initial={{ opacity: 0, y: 24 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, ease, delay: 0.45 }}

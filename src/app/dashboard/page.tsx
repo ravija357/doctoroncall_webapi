@@ -154,14 +154,14 @@ export default function DashboardPage() {
                             <div className="bg-white/5 backdrop-blur-3xl rounded-[2.5rem] p-6 mt-8 flex items-center gap-6 border border-white/10 group-hover:bg-white/10 transition-colors duration-500">
                                 <div className="w-20 h-20 rounded-2xl bg-[#70c0fa]/20 overflow-hidden flex-shrink-0 border-2 border-white/10 relative">
                                      <img 
-                                        src={getImageUrl(nextAppointment.doctor.user.image, nextAppointment.doctor._id)} 
+                                        src={getImageUrl(nextAppointment.doctor.user?.image, nextAppointment.doctor._id)} 
                                         alt="Doctor" 
                                         className="w-full h-full object-cover"
                                      />
                                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
                                 </div>
                                 <div className="flex-1">
-                                    <h3 className="font-black text-2xl tracking-tight">Dr. {nextAppointment.doctor.user.firstName} {nextAppointment.doctor.user.lastName}</h3>
+                                    <h3 className="font-black text-2xl tracking-tight">Dr. {nextAppointment.doctor.user?.firstName || "Unknown"} {nextAppointment.doctor.user?.lastName || "Doctor"}</h3>
                                     <p className="text-[#70c0fa] text-sm font-black uppercase tracking-widest opacity-80 mt-1">{nextAppointment.doctor.specialization}</p>
                                 </div>
                                 <div className="text-right pl-8 border-l border-white/10">
@@ -249,7 +249,7 @@ export default function DashboardPage() {
                         >
                             <div className="w-full aspect-[4/5] rounded-[2rem] overflow-hidden mb-6 bg-slate-100 relative">
                                 <img 
-                                    src={getImageUrl(doctor.user.image, doctor._id)} 
+                                    src={getImageUrl(doctor.user?.image, doctor._id)} 
                                     alt="Doctor" 
                                     className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
                                 />
@@ -260,7 +260,7 @@ export default function DashboardPage() {
                                 </div>
                             </div>
                             <div className="relative z-10">
-                                <h3 className="font-black text-xl text-slate-900 tracking-tight transition-colors group-hover:text-[#70c0fa]">Dr. {doctor.user.firstName} {doctor.user.lastName}</h3>
+                                <h3 className="font-black text-xl text-slate-900 tracking-tight transition-colors group-hover:text-[#70c0fa]">Dr. {doctor.user?.firstName || "Unknown"} {doctor.user?.lastName || "Doctor"}</h3>
                                 <p className="text-slate-500 text-xs font-black uppercase tracking-widest mt-1">{doctor.specialization}</p>
                                 <div className="flex items-center justify-between mt-6 pt-5 border-t border-slate-100">
                                     <div>

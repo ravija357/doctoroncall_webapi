@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
-type Role = 'doctor' | 'patient' | null;
+type Role = 'doctor' | 'patient' | 'admin' | null;
 
 interface RoleContextType {
   role: Role;
@@ -20,7 +20,7 @@ export function RoleProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Load role from localStorage on mount
     const savedRole = localStorage.getItem('selected_role') as Role;
-    if (savedRole && (savedRole === 'doctor' || savedRole === 'patient')) {
+    if (savedRole && (savedRole === 'doctor' || savedRole === 'patient' || savedRole === 'admin')) {
       setRoleState(savedRole);
     }
     setIsLoading(false);
