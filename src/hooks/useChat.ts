@@ -17,6 +17,7 @@ export function useChat() {
     const [activeContact, setActiveContact] = useState<ChatContact | null>(null);
     const [messages, setMessages] = useState<Message[]>([]);
     const [isLoadingMessages, setIsLoadingMessages] = useState(false);
+    const [typingUserId, setTypingUserId] = useState<string | null>(null);
 
     // Fetch Contacts Logic
     useEffect(() => {
@@ -269,6 +270,23 @@ export function useChat() {
     }, [socket, activeContact]);
 
 
+    // Typing Indicators Listeners
+    useEffect(() => {
+        const handleTypingStart = (e: any) => {
+            setTypingUserId(e.detail.userId);
+        };
+        const handleTypingStop = (e: any) => {
+            setTypingUserId(prev => prev === e.detail.userId ? null : prev);
+        };
+
+        window.addEventListener('typing_start', handleTypingStart);
+        window.addEventListener('typing_stop', handleTypingStop);
+
+        return () => {
+            window.removeEventListener('typing_start', handleTypingStart);
+            window.removeEventListener('typing_stop', handleTypingStop);
+        };
+    }, []);
     // Notifications
     useEffect(() => {
         if (!socket) return;
@@ -360,6 +378,9 @@ export function useChat() {
         sendMessage,
         deleteMessage,
         clearChat,
-        isLoadingMessages
+        isLoadingMessages,
+        typingUserId,
+        emitTyping: (receiverId: string) => socket?.emit('typing', { to: receiverId }),
+        emitStopTyping: (receiverId: string) => socket?.emit('stop_typing', { to: receiverId })
     };
 }

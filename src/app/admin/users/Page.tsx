@@ -20,6 +20,19 @@ export default function AdminUsersPage() {
 
   useEffect(() => {
     fetchUsers();
+
+    const handleSync = () => {
+      console.log('[USERS_PAGE] Sync signal received, refreshing...');
+      fetchUsers();
+    };
+
+    window.addEventListener('admin_user_sync', handleSync);
+    window.addEventListener('admin_stats_sync', handleSync);
+
+    return () => {
+      window.removeEventListener('admin_user_sync', handleSync);
+      window.removeEventListener('admin_stats_sync', handleSync);
+    };
   }, []);
 
   const fetchUsers = async () => {

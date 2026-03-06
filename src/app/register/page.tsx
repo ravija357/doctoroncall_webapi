@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import AuthLayout from "@/components/auth/AuthLayout";
 import { useRegisterForm } from "@/hooks/useRegisterForm";
+import { motion } from "framer-motion";
 
 export default function RegisterPage() {
   const { form, isLoading, error, currentRole, onSubmit } = useRegisterForm();
@@ -68,110 +69,133 @@ export default function RegisterPage() {
         </div>
       }
     >
-      <div className="mb-10 text-center lg:text-left">
+      <motion.div 
+        initial={{ opacity: 0, x: 20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.8, ease: "easeOut" }}
+        className="mb-10 text-center lg:text-left"
+      >
         <Link href="/" className="inline-flex items-center gap-2 group mb-8">
-          <img 
-            src="/doctoroncall-log.png" 
-            alt="DoctorOnCall Logo" 
-            className="h-16 w-auto object-contain"
-          />
+          <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100 group-hover:scale-110 transition-transform duration-500 shadow-sm shadow-slate-200/50">
+            <img 
+              src="/doctoroncall-log.png" 
+              alt="DoctorOnCall Logo" 
+              className="h-10 w-auto object-contain"
+            />
+          </div>
         </Link>
-        <h2 className="text-3xl font-black tracking-tight text-slate-900">Create account</h2>
-        <p className="mt-2 text-sm text-slate-500 font-medium">
-          Already have an account?{" "}
-          <Link href="/login" className="font-bold text-primary hover:text-primary-hover underline-offset-4 hover:underline">
+        <h2 className="text-4xl font-black tracking-tight text-slate-900 mb-2">Create account</h2>
+        <p className="text-slate-500 font-medium">
+          Already part of the network?{" "}
+          <Link href="/login" className="font-black text-primary hover:text-primary-hover underline-offset-8 hover:underline decoration-2 transition-all">
             Sign in
           </Link>
         </p>
-      </div>
+      </motion.div>
 
-      <form onSubmit={onSubmit} className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-1">
-            <Label htmlFor="firstName" className="text-slate-700 font-bold">First Name</Label>
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
+      >
+        <form onSubmit={onSubmit} className="space-y-5">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="firstName" className="text-[11px] uppercase tracking-[0.2em] font-black text-slate-400 ml-1">First Name</Label>
+              <Input
+                id="firstName"
+                placeholder="John"
+                {...register("firstName")}
+                className={`h-14 bg-slate-50/50 border-slate-200 focus:bg-white focus:ring-4 focus:ring-primary/5 transition-all rounded-2xl px-5 text-base font-medium ${errors.firstName ? "border-red-500 ring-4 ring-red-500/5" : ""}`}
+              />
+              {errors.firstName && <p className="text-xs font-bold text-red-500 mt-1.5 ml-1">{errors.firstName.message}</p>}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="lastName" className="text-[11px] uppercase tracking-[0.2em] font-black text-slate-400 ml-1">Last Name</Label>
+              <Input
+                id="lastName"
+                placeholder="Doe"
+                {...register("lastName")}
+                className={`h-14 bg-slate-50/50 border-slate-200 focus:bg-white focus:ring-4 focus:ring-primary/5 transition-all rounded-2xl px-5 text-base font-medium ${errors.lastName ? "border-red-500 ring-4 ring-red-500/5" : ""}`}
+              />
+              {errors.lastName && <p className="text-xs font-bold text-red-500 mt-1.5 ml-1">{errors.lastName.message}</p>}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="email" className="text-[11px] uppercase tracking-[0.2em] font-black text-slate-400 ml-1">Email address</Label>
             <Input
-              id="firstName"
-              placeholder="John"
-              {...register("firstName")}
-              className={`h-11 bg-slate-50 border-slate-200 focus:bg-white rounded-xl ${errors.firstName ? "border-red-500 ring-red-500" : ""}`}
+              id="email"
+              type="email"
+              placeholder="name@example.com"
+              {...register("email")}
+              className={`h-14 bg-slate-50/50 border-slate-200 focus:bg-white focus:ring-4 focus:ring-primary/5 transition-all rounded-2xl px-5 text-base font-medium ${errors.email ? "border-red-500 ring-4 ring-red-500/5" : ""}`}
             />
-            {errors.firstName && <p className="text-[10px] font-bold text-red-500">{errors.firstName.message}</p>}
+            {errors.email && <p className="text-xs font-bold text-red-500 mt-1.5 ml-1">{errors.email.message}</p>}
           </div>
-          <div className="space-y-1">
-            <Label htmlFor="lastName" className="text-slate-700 font-bold">Last Name</Label>
+
+          <div className="space-y-2">
+            <Label htmlFor="password" title="password" className="text-[11px] uppercase tracking-[0.2em] font-black text-slate-400 ml-1">Password</Label>
             <Input
-              id="lastName"
-              placeholder="Doe"
-              {...register("lastName")}
-              className={`h-11 bg-slate-50 border-slate-200 focus:bg-white rounded-xl ${errors.lastName ? "border-red-500 ring-red-500" : ""}`}
+              id="password"
+              type="password"
+              placeholder="••••••••"
+              {...register("password")}
+              className={`h-14 bg-slate-50/50 border-slate-200 focus:bg-white focus:ring-4 focus:ring-primary/5 transition-all rounded-2xl px-5 text-base font-medium ${errors.password ? "border-red-500 ring-4 ring-red-500/5" : ""}`}
             />
-            {errors.lastName && <p className="text-[10px] font-bold text-red-500">{errors.lastName.message}</p>}
+            {errors.password && <p className="text-xs font-bold text-red-500 mt-1.5 ml-1">{errors.password.message}</p>}
           </div>
-        </div>
 
-        <div className="space-y-1">
-          <Label htmlFor="email" className="text-slate-700 font-bold">Email address</Label>
-          <Input
-            id="email"
-            type="email"
-            placeholder="name@example.com"
-            {...register("email")}
-            className={`h-11 bg-slate-50 border-slate-200 focus:bg-white rounded-xl ${errors.email ? "border-red-500 ring-red-500" : ""}`}
-          />
-          {errors.email && <p className="text-[10px] font-bold text-red-500">{errors.email.message}</p>}
-        </div>
-
-        <div className="space-y-1">
-          <Label htmlFor="password" title="password" className="text-slate-700 font-bold">Password</Label>
-          <Input
-            id="password"
-            type="password"
-            placeholder="••••••••"
-            {...register("password")}
-            className={`h-11 bg-slate-50 border-slate-200 focus:bg-white rounded-xl ${errors.password ? "border-red-500 ring-red-500" : ""}`}
-          />
-          {errors.password && <p className="text-[10px] font-bold text-red-500">{errors.password.message}</p>}
-        </div>
-
-        <div className="space-y-1">
-          <Label htmlFor="confirmPassword" title="confirmPassword" className="text-slate-700 font-bold">Confirm Password</Label>
-          <Input
-            id="confirmPassword"
-            type="password"
-            placeholder="••••••••"
-            {...register("confirmPassword")}
-            className={`h-11 bg-slate-50 border-slate-200 focus:bg-white rounded-xl ${errors.confirmPassword ? "border-red-500 ring-red-500" : ""}`}
-          />
-          {errors.confirmPassword && <p className="text-[10px] font-bold text-red-500">{errors.confirmPassword.message}</p>}
-        </div>
-
-        <div className="py-2">
-          {/* Role selection hidden, handled by context */}
-          <input type="hidden" {...register("role")} />
-          {errors.role && <p className="text-[10px] font-bold text-red-500 mt-1">{errors.role.message}</p>}
-        </div>
-
-        {error && (
-          <div className="rounded-xl bg-red-50 p-3 border border-red-100 mb-4">
-            <p className="text-[10px] font-bold text-red-600 text-center uppercase tracking-wider">{error}</p>
+          <div className="space-y-2">
+            <Label htmlFor="confirmPassword" title="confirmPassword" className="text-[11px] uppercase tracking-[0.2em] font-black text-slate-400 ml-1">Confirm Password</Label>
+            <Input
+              id="confirmPassword"
+              type="password"
+              placeholder="••••••••"
+              {...register("confirmPassword")}
+              className={`h-14 bg-slate-50/50 border-slate-200 focus:bg-white focus:ring-4 focus:ring-primary/5 transition-all rounded-2xl px-5 text-base font-medium ${errors.confirmPassword ? "border-red-500 ring-4 ring-red-500/5" : ""}`}
+            />
+            {errors.confirmPassword && <p className="text-xs font-bold text-red-500 mt-1.5 ml-1">{errors.confirmPassword.message}</p>}
           </div>
-        )}
 
-        <Button type="submit" className="w-full h-12 bg-primary hover:bg-primary-hover text-white font-bold rounded-xl shadow-lg shadow-primary/30" disabled={isLoading}>
-          {isLoading ? (
-            <>
-              <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-              Creating account...
-            </>
-          ) : (
-            "Create Account"
+          <div className="py-2">
+            <input type="hidden" {...register("role")} />
+            {errors.role && <p className="text-xs font-bold text-red-500 mt-1.5 ml-1">{errors.role.message}</p>}
+          </div>
+
+          {error && (
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="rounded-2xl bg-red-50 p-4 border border-red-100"
+            >
+              <p className="text-sm font-bold text-red-600 text-center uppercase tracking-wider">{error}</p>
+            </motion.div>
           )}
-        </Button>
-      </form>
 
-      <p className="mt-8 text-[11px] text-slate-400 leading-relaxed text-center italic">
-        By creating an account, you agree to our <span className="underline cursor-pointer">Terms of Service</span> and <span className="underline cursor-pointer">Privacy Policy</span>.
-      </p>
+          <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}>
+            <Button type="submit" className="w-full h-14 bg-primary hover:bg-primary-hover text-white font-black text-sm uppercase tracking-widest rounded-2xl shadow-xl shadow-primary/20 transition-all" disabled={isLoading}>
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  Finalizing node...
+                </>
+              ) : (
+                "Initialize Registration"
+              )}
+            </Button>
+          </motion.div>
+        </form>
+
+        <motion.p 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1 }}
+          className="mt-10 text-[11px] text-slate-400 leading-relaxed text-center italic"
+        >
+          By creating an account, you agree to our <span className="underline cursor-pointer hover:text-slate-600 transition-colors">Terms of Service</span> and <span className="underline cursor-pointer hover:text-slate-600 transition-colors">Privacy Policy</span>.
+        </motion.p>
+      </motion.div>
     </AuthLayout>
   );
 }

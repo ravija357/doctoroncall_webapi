@@ -15,6 +15,7 @@ import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 import { SocialButton } from "@/components/ui/SocialButton";
 import { Apple } from "lucide-react";
+import { motion } from "framer-motion";
 
 export default function LoginPage() {
   const { form, isLoading: isFormLoading, error, currentRole, onSubmit } = useLoginForm();
@@ -115,36 +116,49 @@ export default function LoginPage() {
         </div>
       }
     >
-      <div className="mb-8">
-        <Link href="/" className="inline-flex items-center gap-2 group mb-6">
-          <img 
-            src="/doctoroncall-log.png" 
-            alt="DoctorOnCall Logo" 
-            className="h-16 w-auto object-contain"
-          />
+      <motion.div 
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.8, ease: "easeOut" }}
+        className="mb-10"
+      >
+        <Link href="/" className="inline-flex items-center gap-2 group mb-8">
+          <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100 group-hover:scale-110 transition-transform duration-500">
+            <img 
+              src="/doctoroncall-log.png" 
+              alt="DoctorOnCall Logo" 
+              className="h-10 w-auto object-contain"
+            />
+          </div>
         </Link>
-        <h2 className="text-3xl font-black tracking-tight text-slate-900">Welcome back</h2>
-      </div>
+        <h2 className="text-4xl font-black tracking-tight text-slate-900 mb-2">Welcome back</h2>
+        <p className="text-slate-500 font-medium">Please enter your credentials to access your node.</p>
+      </motion.div>
 
-      <div className="mt-8">
-        <form onSubmit={onSubmit} className="space-y-5">
-          <div className="space-y-1">
-            <Label htmlFor="email" className="text-slate-700 font-bold">Email address</Label>
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
+        className="mt-8"
+      >
+        <form onSubmit={onSubmit} className="space-y-6">
+          <div className="space-y-2">
+            <Label htmlFor="email" className="text-[11px] uppercase tracking-[0.2em] font-black text-slate-400 ml-1">Email address</Label>
             <Input
               id="email"
               type="email"
               placeholder="name@example.com"
               {...register("email")}
-              className={`h-12 bg-slate-50 border-slate-200 focus:bg-white transition-all rounded-xl ${errors.email ? "border-red-500 ring-red-500" : ""}`}
+              className={`h-14 bg-slate-50/50 border-slate-200 focus:bg-white focus:ring-4 focus:ring-primary/5 transition-all rounded-2xl px-5 text-base font-medium ${errors.email ? "border-red-500 ring-4 ring-red-500/5" : ""}`}
             />
-            {errors.email && <p className="text-xs font-bold text-red-500 mt-1">{errors.email.message}</p>}
+            {errors.email && <p className="text-xs font-bold text-red-500 mt-1.5 ml-1">{errors.email.message}</p>}
           </div>
 
-          <div className="space-y-1">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="password" title="password" className="text-slate-700 font-bold">Password</Label>
-              <Link href="/forgot-password" className="text-xs font-bold text-primary hover:text-primary-hover">
-                Forgot password?
+          <div className="space-y-2">
+            <div className="flex items-center justify-between ml-1">
+              <Label htmlFor="password" title="password" className="text-[11px] uppercase tracking-[0.2em] font-black text-slate-400">Password</Label>
+              <Link href="/forgot-password" className="text-xs font-bold text-primary hover:text-primary-hover transition-colors">
+                Recover access?
               </Link>
             </div>
             <Input
@@ -152,57 +166,63 @@ export default function LoginPage() {
               type="password"
               placeholder="••••••••"
               {...register("password")}
-              className={`h-12 bg-slate-50 border-slate-200 focus:bg-white transition-all rounded-xl ${errors.password ? "border-red-500 ring-red-500" : ""}`}
+              className={`h-14 bg-slate-50/50 border-slate-200 focus:bg-white focus:ring-4 focus:ring-primary/5 transition-all rounded-2xl px-5 text-base font-medium ${errors.password ? "border-red-500 ring-4 ring-red-500/5" : ""}`}
             />
-            {errors.password && <p className="text-xs font-bold text-red-500 mt-1">{errors.password.message}</p>}
+            {errors.password && <p className="text-xs font-bold text-red-500 mt-1.5 ml-1">{errors.password.message}</p>}
           </div>
 
           {error && (
-            <div className="rounded-xl bg-red-50 p-4 border border-red-100">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="rounded-2xl bg-red-50 p-4 border border-red-100"
+            >
               <p className="text-sm font-bold text-red-600 text-center">{error}</p>
-            </div>
+            </motion.div>
           )}
 
-          <Button type="submit" className="w-full h-12 bg-primary hover:bg-primary-hover text-white font-bold rounded-xl shadow-lg shadow-primary/30 transition-all hover:-translate-y-0.5" disabled={isLoading}>
-            {isLoading ? (
-              <Loader2 className="h-5 w-5 animate-spin" />
-            ) : (
-              `Sign In${currentRole === 'admin' ? ' as Admin' : ''}`
-            )}
-          </Button>
+          <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}>
+            <Button type="submit" className="w-full h-14 bg-primary hover:bg-primary-hover text-white font-black text-sm uppercase tracking-widest rounded-2xl shadow-xl shadow-primary/20 transition-all" disabled={isLoading}>
+              {isLoading ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                `Authorize Session${currentRole === 'admin' ? ' [ADMIN]' : ''}`
+              )}
+            </Button>
+          </motion.div>
 
           {/* Admin login toggle */}
           <div className="flex justify-center">
             <button
               type="button"
               onClick={() => form.setValue('role', currentRole === 'admin' ? 'user' : 'admin')}
-              className={`inline-flex items-center gap-1.5 text-xs font-bold transition-all rounded-full px-3 py-1.5 ${
+              className={`inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] transition-all rounded-xl px-4 py-2 border ${
                 currentRole === 'admin'
-                  ? 'bg-slate-900 text-white'
-                  : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'
+                  ? 'bg-slate-900 text-white border-slate-900 shadow-lg'
+                  : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50 border-slate-100'
               }`}
             >
-              <Shield className="w-3 h-3" />
-              {currentRole === 'admin' ? 'Admin Mode Active — switch back' : 'Sign in as Admin'}
+              <Shield className="w-3.5 h-3.5" />
+              {currentRole === 'admin' ? 'Admin Mode Activated' : 'Switch to Admin Node'}
             </button>
           </div>
         </form>
 
-        <div className="mt-8">
+        <div className="mt-12">
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-slate-200" />
+              <div className="w-full border-t border-slate-100" />
             </div>
-            <div className="relative flex justify-center text-xs font-bold uppercase tracking-widest">
-              <span className="bg-white px-4 text-slate-400">Or continue with</span>
+            <div className="relative flex justify-center text-[10px] font-black uppercase tracking-[0.3em] mb-4">
+              <span className="bg-white px-6 text-slate-300">Gateway Authentication</span>
             </div>
           </div>
 
-          <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
             <SocialButton
               onClick={() => googleLoginHandler()}
               disabled={isLoading}
-              label="Google Account"
+              label="Google ID"
               icon={
                 <svg className="w-5 h-5" viewBox="0 0 24 24">
                   <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -216,19 +236,24 @@ export default function LoginPage() {
             <SocialButton
               onClick={handleAppleLogin}
               disabled={isLoading}
-              label="Apple Account"
+              label="Apple ID"
               icon={<Apple className="w-5 h-5 fill-slate-900" />}
             />
           </div>
         </div>
-      </div>
+      </motion.div>
 
-      <p className="mt-8 text-sm text-slate-500 font-medium">
+      <motion.p 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 1 }}
+        className="mt-12 text-sm text-slate-500 font-medium text-center lg:text-left"
+      >
         Don't have an account?{" "}
-        <Link href="/register" className="font-bold text-primary hover:text-primary-hover underline-offset-4 hover:underline transition-all">
-          Create an account
+        <Link href="/register" className="font-black text-primary hover:text-primary-hover underline-offset-8 hover:underline decoration-2 transition-all">
+          Register new node
         </Link>
-      </p>
+      </motion.p>
     </AuthLayout>
   );
 }

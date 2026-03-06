@@ -297,7 +297,7 @@ export default function MyPatientsPage() {
   const selectedPatient = patients.find((p) => p._id === selectedPatientId);
   const patientHistory = selectedPatientId
     ? allAppointments
-        .filter((a) => a.patient._id === selectedPatientId)
+        .filter((a) => a.patient?._id === selectedPatientId)
         .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     : [];
 

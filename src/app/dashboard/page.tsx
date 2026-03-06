@@ -265,7 +265,7 @@ export default function DashboardPage() {
                                 <div className="flex items-center justify-between mt-6 pt-5 border-t border-slate-100">
                                     <div>
                                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-tighter leading-none">CONSULTATION</p>
-                                        <p className="font-black text-2xl text-slate-900 mt-1">${doctor.fees}</p>
+                                        <p className="font-black text-2xl text-slate-900 mt-1">Rs. {doctor.fees}</p>
                                     </div>
                                     <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600 group-hover:bg-[#70c0fa] group-hover:text-white transition-all duration-500 group-hover:rotate-12 group-hover:shadow-lg">
                                         <ChevronRight className="w-6 h-6" />

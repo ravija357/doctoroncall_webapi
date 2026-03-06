@@ -2,20 +2,22 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Loader2, Mail, ArrowLeft } from "lucide-react";
+import { motion } from "framer-motion";
+import { Loader2, ArrowLeft, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import AuthLayout from "@/components/auth/AuthLayout";
+import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
-import { motion } from "framer-motion";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [isSent, setIsSent] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
+  const { forgotPassword } = useAuth();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleReset = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) {
       toast.error("Please enter your email address");
@@ -24,23 +26,14 @@ export default function ForgotPasswordPage() {
 
     setIsLoading(true);
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/auth/forgot-password`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email }),
-        }
-      );
-      const data = await res.json();
-      if (data.success) {
-        setIsSent(true);
-        toast.success("Reset link sent! Check your email.");
+      const result = await forgotPassword(email);
+      if (result.success) {
+        setIsSuccess(true);
       } else {
-        toast.error(data.message || 'Something went wrong.');
+        toast.error(result.message || "Failed to send reset link");
       }
-    } catch (err) {
-      toast.error("Network error. Please try again.");
+    } catch (err: any) {
+      toast.error("An error occurred. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -50,138 +43,87 @@ export default function ForgotPasswordPage() {
     <AuthLayout
       sidebar={
         <div className="absolute inset-0 h-full w-full bg-[#0a192f] overflow-hidden flex items-center justify-center group">
-          {/* Deep premium background */}
           <div className="absolute inset-0 bg-gradient-to-br from-primary-hover via-primary to-[#0f2a4a] opacity-95" />
-
-          {/* Micro-grid pattern */}
           <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', backgroundSize: '32px 32px' }} />
-
-          {/* Ambient orbs */}
-          <div className="absolute -top-[10%] -right-[10%] w-[60%] h-[60%] rounded-full bg-primary-light/40 blur-[140px] mix-blend-screen animate-pulse duration-[8000ms]" />
-          <div className="absolute -bottom-[10%] -left-[10%] w-[70%] h-[70%] rounded-full bg-blue-400/30 blur-[150px] mix-blend-screen animate-pulse duration-[12000ms] delay-1000" />
-
-          {/* Main content */}
-          <div className="relative z-10 flex flex-col items-center justify-center px-12 transition-transform duration-1000 ease-out group-hover:scale-[1.02]">
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-white/10 blur-[100px] rounded-full opacity-60 group-hover:bg-white/20 transition-all duration-1000 ease-in-out" />
-
-            {/* Glassmorphism logo card */}
-            <div className="relative bg-white/90 backdrop-blur-[40px] p-20 rounded-[4rem] border border-white/50 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.5)] flex items-center justify-center overflow-hidden hover:bg-white hover:border-white transition-all duration-700 ease-in-out transform group-hover:-translate-y-2">
-              <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white to-transparent opacity-80" />
-              <div className="absolute inset-y-0 left-0 w-px bg-gradient-to-b from-white to-transparent opacity-50" />
-              <img
-                src="/doctoroncall-log.png"
-                alt="DoctorOnCall Logo"
-                className="relative z-10 h-32 w-auto object-contain drop-shadow-sm transform group-hover:scale-105 transition-transform duration-700"
+          
+          <div className="relative z-10 flex flex-col items-center justify-center px-12">
+            <div className="relative bg-white/90 backdrop-blur-[40px] p-20 rounded-[4rem] border border-white/50 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.5)]">
+              <img 
+                src="/doctoroncall-log.png" 
+                alt="DoctorOnCall Logo" 
+                className="h-32 w-auto object-contain"
               />
             </div>
-
-            {/* Typography */}
-            <div className="mt-14 flex flex-col items-center max-w-sm text-center transform group-hover:-translate-y-2 transition-transform duration-700 ease-out delay-100">
-              <h2 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-br from-white via-white/90 to-white/40 mb-4 tracking-tight">
-                Recover Your Access.
-              </h2>
-              <p className="text-white/60 text-sm leading-relaxed font-medium">
-                We'll send a secure reset link to your email. Back and{" "}
-                <span className="text-white/90 font-bold">protected</span> in minutes.
+            <div className="mt-14 flex flex-col items-center max-w-sm text-center">
+              <h2 className="text-3xl font-bold text-white mb-4">Security First.</h2>
+              <p className="text-white/60 text-sm leading-relaxed">
+                We take your security seriously. Follow the instructions sent to your email to recover your access safely.
               </p>
-            </div>
-
-            {/* Hover accent */}
-            <div className="mt-12 flex flex-col items-center opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all duration-700 ease-in-out delay-300">
-              <div className="flex items-center gap-4">
-                <span className="w-12 h-[1px] bg-gradient-to-r from-transparent to-white/40" />
-                <span className="text-primary-light/80 text-[10px] font-bold tracking-[0.5em] uppercase">Secure Recovery</span>
-                <span className="w-12 h-[1px] bg-gradient-to-l from-transparent to-white/40" />
-              </div>
             </div>
           </div>
         </div>
       }
     >
-      <div className="mb-8">
-        <Link href="/" className="inline-flex items-center gap-2 group mb-6">
-          <img 
-            src="/doctoroncall-log.png" 
-            alt="DoctorOnCall Logo" 
-            className="h-16 w-auto object-contain"
-          />
+      <motion.div 
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.8, ease: "easeOut" }}
+        className="mb-10"
+      >
+        <Link href="/login" className="inline-flex items-center gap-2 group mb-8 text-slate-500 hover:text-primary transition-colors font-bold text-sm">
+          <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+          Back to Login
         </Link>
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          <h2 className="text-3xl font-black tracking-tight text-slate-900">Forgot password?</h2>
-          <p className="mt-2 text-sm text-slate-500 font-medium leading-relaxed">
-            No worries! Enter your email and we'll send you instructions to reset your password.
-          </p>
-        </motion.div>
-      </div>
+        <h2 className="text-4xl font-black tracking-tight text-slate-900 mb-2">Reset Password</h2>
+        {!isSuccess && <p className="text-slate-500 font-medium">Enter your email and we'll send you recovery instructions.</p>}
+      </motion.div>
 
-      <div className="mt-8">
-        {!isSent ? (
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-1">
-              <Label htmlFor="email" className="text-slate-700 font-bold">Email address</Label>
-              <div className="relative">
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="name@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="h-12 bg-slate-50 border-slate-200 focus:bg-white transition-all rounded-xl pl-11"
-                  required
-                />
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
-              </div>
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
+      >
+        {!isSuccess ? (
+          <form onSubmit={handleReset} className="space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="email" className="text-[11px] uppercase tracking-[0.2em] font-black text-slate-400 ml-1">Email address</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="name@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="h-14 bg-slate-50/50 border-slate-200 focus:bg-white focus:ring-4 focus:ring-primary/5 transition-all rounded-2xl px-5 text-base font-medium"
+              />
             </div>
 
-            <Button 
-              type="submit" 
-              className="w-full h-12 bg-primary hover:bg-primary-hover text-white font-bold rounded-xl shadow-lg shadow-primary/30 transition-all hover:-translate-y-0.5" 
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <Loader2 className="h-5 w-5 animate-spin" />
-              ) : (
-                "Send Reset Link"
-              )}
-            </Button>
+            <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}>
+              <Button type="submit" className="w-full h-14 bg-primary hover:bg-primary-hover text-white font-black text-sm uppercase tracking-widest rounded-2xl shadow-xl shadow-primary/20 transition-all" disabled={isLoading}>
+                {isLoading ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                  "Send Recovery Link"
+                )}
+              </Button>
+            </motion.div>
           </form>
         ) : (
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="rounded-2xl bg-primary/5 border border-primary/10 p-8 text-center"
-          >
-            <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
-              <Mail className="h-8 w-8 text-primary" />
+          <div className="text-center">
+            <div className="inline-flex items-center justify-center w-20 h-20 bg-green-50 rounded-full mb-8">
+              <CheckCircle2 className="w-10 h-10 text-green-500" />
             </div>
-            <h3 className="text-xl font-black text-slate-900 mb-2">Check your email</h3>
-            <p className="text-sm text-slate-500 font-medium mb-6">
-              We've sent a password reset link to <span className="text-primary font-bold">{email}</span>.
+            <h3 className="text-2xl font-black text-slate-900 mb-4">Check your email</h3>
+            <p className="text-slate-500 font-medium mb-10 leading-relaxed">
+              If an account exists for <span className="text-slate-900 font-bold">{email}</span>, you will receive a password reset link shortly.
             </p>
-            <Button 
-              variant="outline" 
-              onClick={() => setIsSent(false)}
-              className="w-full h-11 border-slate-200 text-slate-600 font-bold rounded-xl hover:bg-slate-50"
-            >
-              Didn't receive it? Try again
-            </Button>
-          </motion.div>
+            <Link href="/login">
+              <Button variant="outline" className="h-14 px-8 rounded-2xl border-slate-200 font-black text-sm uppercase tracking-widest hover:bg-slate-50 transition-all">
+                Return to Login
+              </Button>
+            </Link>
+          </div>
         )}
-
-        <div className="mt-8">
-          <Link 
-            href="/login" 
-            className="inline-flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-primary transition-colors group"
-          >
-            <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
-            Back to Login
-          </Link>
-        </div>
-      </div>
+      </motion.div>
     </AuthLayout>
   );
 }

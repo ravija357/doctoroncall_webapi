@@ -41,9 +41,21 @@ export default function AdminDashboard() {
     };
 
     fetchStats();
-    // Refresh every 30 seconds for real-time feel
-    const interval = setInterval(fetchStats, 30000);
-    return () => clearInterval(interval);
+
+    // Real-time synchronization
+    const handleSync = () => {
+      console.log('[DASHBOARD] Sync signal received, refreshing...');
+      fetchStats();
+    };
+
+    window.addEventListener('admin_stats_sync', handleSync);
+
+    // Keep polling as a fallback
+    const interval = setInterval(fetchStats, 60000);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('admin_stats_sync', handleSync);
+    };
   }, []);
 
   const stats = [

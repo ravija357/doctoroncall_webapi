@@ -88,19 +88,19 @@ function CheckoutContent() {
                 <div className="px-8 space-y-4 mb-10">
                     <div className="flex justify-between items-center text-sm font-bold text-slate-800">
                         <span>Product Amount:</span>
-                        <span>NPR {fees.toFixed(2)}</span>
+                        <span>Rs. {fees.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between items-center text-sm font-bold text-slate-800">
                         <span>Tax Amount:</span>
-                        <span>NPR {tax.toFixed(2)}</span>
+                        <span>Rs. {tax.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between items-center text-sm font-bold text-slate-800">
                         <span>Delivery Charge:</span>
-                        <span>NPR {delivery.toFixed(2)}</span>
+                        <span>Rs. {delivery.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between items-center text-sm font-bold text-slate-800 mt-6 pt-2">
                         <span>Total Amount:</span>
-                        <span>NPR {total.toFixed(2)}</span>
+                        <span>Rs. {total.toFixed(2)}</span>
                     </div>
                 </div>
 

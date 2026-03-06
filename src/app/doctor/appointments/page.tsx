@@ -56,8 +56,8 @@ export default function DoctorAppointmentsPage() {
 
     const filteredAppointments = appointments.filter(apt => {
         const matchesFilter = filter === 'all' || apt.status === filter;
-        const matchesSearch = apt.patient.firstName.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                              apt.patient.lastName.toLowerCase().includes(searchQuery.toLowerCase());
+        const patientName = `${apt.patient?.firstName || ''} ${apt.patient?.lastName || ''}`.toLowerCase();
+        const matchesSearch = patientName.includes(searchQuery.toLowerCase());
         return matchesFilter && matchesSearch;
     });
 
@@ -132,13 +132,13 @@ export default function DoctorAppointmentsPage() {
                                 <div className="flex items-center gap-4 flex-1 w-full">
                                     <div className="w-14 h-14 rounded-full bg-slate-100 overflow-hidden ring-2 ring-slate-50 group-hover:ring-emerald-100 transition-all">
                                         <img 
-                                            src={getImageUrl(apt.patient.image, apt.patient._id)} 
+                                            src={getImageUrl(apt.patient?.image, apt.patient?._id)} 
                                             alt="Patient" 
                                             className="w-full h-full object-cover" 
                                         />
                                     </div>
                                     <div className="flex-1">
-                                        <h3 className="font-bold text-lg text-slate-800">{apt.patient.firstName} {apt.patient.lastName}</h3>
+                                        <h3 className="font-bold text-lg text-slate-800">{apt.patient?.firstName || 'Unknown'} {apt.patient?.lastName || 'Patient'}</h3>
                                         <p className="text-slate-500 text-sm font-medium">{apt.reason || 'General Consultation'}</p>
                                     </div>
                                 </div>

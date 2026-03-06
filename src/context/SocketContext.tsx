@@ -112,6 +112,46 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
                 refreshUser();
             });
 
+            // New Real-time Sync Listeners
+            newSocket.on('appointment_sync', () => {
+                console.log('[SOCKET] Appointment sync signal received');
+                // Could trigger a global refresh or specific event
+                window.dispatchEvent(new CustomEvent('appointment_sync'));
+            });
+
+            newSocket.on('notification_sync', () => {
+                console.log('[SOCKET] Notification sync signal received');
+                window.dispatchEvent(new CustomEvent('notification_sync'));
+            });
+
+            newSocket.on('record_sync', () => {
+                console.log('[SOCKET] Medical record sync signal received');
+                window.dispatchEvent(new CustomEvent('record_sync'));
+            });
+
+            newSocket.on('prescription_sync', () => {
+                console.log('[SOCKET] Prescription sync signal received');
+                window.dispatchEvent(new CustomEvent('prescription_sync'));
+            });
+
+            newSocket.on('admin_stats_sync', () => {
+                console.log('[SOCKET] Admin stats sync signal received');
+                window.dispatchEvent(new CustomEvent('admin_stats_sync'));
+            });
+
+            newSocket.on('admin_user_sync', () => {
+                console.log('[SOCKET] Admin user sync signal received');
+                window.dispatchEvent(new CustomEvent('admin_user_sync'));
+            });
+
+            newSocket.on('typing', (data: { from: string }) => {
+                window.dispatchEvent(new CustomEvent('typing_start', { detail: { userId: data.from } }));
+            });
+
+            newSocket.on('stop_typing', (data: { from: string }) => {
+                window.dispatchEvent(new CustomEvent('typing_stop', { detail: { userId: data.from } }));
+            });
+
             setSocket(newSocket);
 
             return () => {

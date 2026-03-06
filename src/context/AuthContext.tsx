@@ -14,6 +14,7 @@ interface AuthContextType {
   googleLogin: (idToken: string, role?: string) => Promise<void>;
   appleLogin: (idToken: string, role?: string) => Promise<void>;
   register: (data: any) => Promise<void>;
+  forgotPassword: (email: string) => Promise<{ success: boolean; message: string }>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
   updateUserLocal: (user: User) => void;
@@ -93,6 +94,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const forgotPassword = async (email: string) => {
+    const res = await api.post<{ success: boolean; message: string }>('/auth/forgot-password', { email });
+    return res.data;
+  };
+
   const logout = async () => {
     try {
       clearRole();
@@ -117,6 +123,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       googleLogin,
       appleLogin,
       register, 
+      forgotPassword,
       logout,
       refreshUser: checkAuth,
       updateUserLocal: (u: User) => {

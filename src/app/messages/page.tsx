@@ -24,7 +24,10 @@ function MessagesContent() {
         sendMessage, 
         deleteMessage, 
         clearChat,
-        isLoadingMessages 
+        isLoadingMessages,
+        typingUserId,
+        emitTyping,
+        emitStopTyping
     } = useChat();
 
     // 2. Call Logic (from SocketContext)
@@ -169,6 +172,9 @@ function MessagesContent() {
                         deleteMessage={deleteMessage}
                         clearChat={clearChat}
                         isLoadingMessages={isLoadingMessages}
+                        isTyping={typingUserId === activeContact.id}
+                        emitTyping={() => activeContact && emitTyping(activeContact.id)}
+                        emitStopTyping={() => activeContact && emitStopTyping(activeContact.id)}
                     />
                 ) : (
                     <div className="hidden md:flex flex-1 flex-col items-center justify-center text-center p-8 bg-[#F8FAFD]">

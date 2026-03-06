@@ -15,6 +15,9 @@ interface ChatWindowProps {
     deleteMessage: (msgId: string, type: 'me' | 'everyone') => void;
     clearChat: (type: 'me' | 'everyone') => void;
     isLoadingMessages: boolean;
+    isTyping?: boolean;
+    emitTyping: () => void;
+    emitStopTyping: () => void;
 }
 
 export function ChatWindow({
@@ -25,7 +28,10 @@ export function ChatWindow({
     sendMessage,
     deleteMessage,
     clearChat,
-    isLoadingMessages
+    isLoadingMessages,
+    isTyping,
+    emitTyping,
+    emitStopTyping
 }: ChatWindowProps) {
     const { user } = useAuth();
     const [newMessage, setNewMessage] = React.useState('');
@@ -57,8 +63,19 @@ export function ChatWindow({
     const handleSend = (e?: React.FormEvent) => {
         e?.preventDefault();
         if (!newMessage.trim()) return;
+        emitStopTyping();
         sendMessage(newMessage);
         setNewMessage('');
+    };
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const val = e.target.value;
+        setNewMessage(val);
+        if (val.trim()) {
+            emitTyping();
+        } else {
+            emitStopTyping();
+        }
     };
 
     const handleDeleteClick = (msgId: string) => {
@@ -129,8 +146,8 @@ export function ChatWindow({
 
                     <div>
                         <h3 className="font-black text-slate-900 text-sm">{contact.name}</h3>
-                        <p className={`text-xs font-medium ${contact.isOnline ? 'text-emerald-500' : 'text-slate-400'}`}>
-                            {contact.isOnline ? '● Active now' : 'Offline'}
+                        <p className={`text-xs font-medium ${isTyping ? 'text-primary' : contact.isOnline ? 'text-emerald-500' : 'text-slate-400'}`}>
+                            {isTyping ? 'typing...' : contact.isOnline ? '● Active now' : 'Offline'}
                         </p>
                     </div>
                 </div>
@@ -276,7 +293,8 @@ export function ChatWindow({
                     <input
                         type="text"
                         value={newMessage}
-                        onChange={(e) => setNewMessage(e.target.value)}
+                        onChange={handleInputChange}
+                        onBlur={() => emitStopTyping()}
                         placeholder="Type a message…"
                         className="flex-1 bg-transparent border-none outline-none text-slate-700 placeholder:text-slate-300 text-sm font-medium"
                     />
